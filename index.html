@@ -1,0 +1,2698 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="P365">
+  <meta name="theme-color" content="#0d0d0f">
+  <title>P365 Control</title>
+  <link rel="manifest" id="pwaManifest">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d0d0f;
+      --surface: #16161a;
+      --surface2: #1c1c22;
+      --border: #252530;
+      --border2: #2e2e3a;
+      --accent: #7c6ef9;
+      --accent-glow: rgba(124, 110, 249, 0.2);
+      --red: #ef4444;
+      --red-soft: rgba(239, 68, 68, 0.12);
+      --green: #22c55e;
+      --green-soft: rgba(34, 197, 94, 0.12);
+      --yellow: #eab308;
+      --yellow-soft: rgba(234, 179, 8, 0.12);
+      --blue: #3b82f6;
+      --blue-soft: rgba(59, 130, 246, 0.12);
+      --text: #e8e8f0;
+      --text2: #8888a0;
+      --text3: #45455a;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Montserrat', sans-serif;
+      --radius: 10px;
+      --sidebar: 220px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      min-height: 100dvh;
+      /* Respect safe areas (notch, home indicator) */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .topbar {
+      /* Sticky accounts for safe-area */
+      top: env(safe-area-inset-top, 0px);
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 2px;
+    }
+
+    /* SETUP */
+    #setupView {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(124, 110, 249, 0.07) 0%, transparent 70%);
+      padding: 20px;
+    }
+
+    .setup-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 36px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .setup-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    .setup-logo {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: var(--accent);
+      margin-bottom: 24px;
+      font-family: var(--mono);
+    }
+
+    .setup-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .setup-sub {
+      font-size: 12px;
+      color: var(--text2);
+      margin-bottom: 24px;
+      line-height: 1.7;
+    }
+
+    .setup-sub code {
+      background: var(--surface2);
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text);
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 6px;
+      font-family: var(--mono);
+    }
+
+    .field input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 12px 14px;
+      font-size: 16px;
+      font-family: var(--mono);
+      border-radius: 8px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: var(--sans);
+      cursor: pointer;
+      transition: all .2s;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary:disabled {
+      background: var(--border2);
+      color: var(--text3);
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--sans);
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .btn-ghost:active {
+      background: var(--surface2);
+    }
+
+    .err {
+      color: var(--red);
+      font-size: 11px;
+      font-family: var(--mono);
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+
+    /* APP LAYOUT */
+    #appView {
+      display: none;
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: var(--sidebar);
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      height: 100dvh;
+      overflow-y: auto;
+      z-index: 100;
+      transition: transform .28s cubic-bezier(.4,0,.2,1);
+    }
+
+    .sidebar-logo {
+      padding: 20px 18px 16px;
+      padding-top: calc(20px + env(safe-area-inset-top, 0px));
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-logo .mark {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--accent);
+      font-family: var(--mono);
+      margin-bottom: 3px;
+    }
+
+    .sidebar-logo .name {
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .sidebar-logo .venue {
+      font-size: 10px;
+      color: var(--text2);
+      margin-top: 2px;
+      font-family: var(--mono);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .nav {
+      padding: 8px 0;
+      flex: 1;
+    }
+
+    .nav-sec {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text3);
+      padding: 10px 18px 4px;
+      font-family: var(--mono);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text2);
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: all .15s;
+      gap: 8px;
+    }
+
+    .nav-item:active {
+      background: var(--surface2);
+    }
+
+    .nav-item.active {
+      color: var(--accent);
+      background: rgba(124, 110, 249, 0.07);
+      border-left-color: var(--accent);
+    }
+
+    .nav-icon {
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .badge {
+      margin-left: auto;
+      background: var(--red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-family: var(--mono);
+    }
+
+    .sidebar-bottom {
+      padding: 12px 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .conn-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--text3);
+      margin-bottom: 10px;
+    }
+
+    .conn-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text3);
+      flex-shrink: 0;
+      transition: all .3s;
+    }
+
+    .conn-dot.live {
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+    }
+
+    .conn-dot.err {
+      background: var(--red);
+    }
+
+    .conn-dot.demo {
+      background: var(--yellow);
+    }
+
+    /* MAIN */
+    .main {
+      flex: 1;
+      min-width: 0;
+      margin-left: var(--sidebar);
+    }
+
+    .topbar {
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      z-index: 50;
+      background: rgba(13, 13, 15, 0.97);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .topbar-row1 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+    }
+
+    .topbar-row2 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .topbar-row3 {
+      display: flex;
+      align-items: center;
+      padding: 6px 16px 10px;
+    }
+
+    .topbar-title {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 800;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .topbar-title span {
+      color: var(--text2);
+      font-weight: 500;
+    }
+
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 20px;
+      padding: 8px;
+      flex-shrink: 0;
+      min-width: 44px;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      -webkit-tap-highlight-color: rgba(124,110,249,0.15);
+    }
+
+    .menu-toggle:active {
+      background: var(--surface2);
+    }
+
+    input[type="date"] {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 7px 10px;
+      font-size: 12px;
+      font-family: var(--mono);
+      border-radius: 6px;
+      outline: none;
+      cursor: pointer;
+      min-width: 0;
+      flex: 1;
+    }
+
+    input[type="date"]:focus {
+      border-color: var(--accent);
+    }
+
+    .tb-label {
+      font-size: 10px;
+      color: var(--text3);
+      font-family: var(--mono);
+    }
+
+    .load-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: var(--sans);
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .load-btn:active {
+      opacity: 0.8;
+    }
+
+    .load-btn:disabled {
+      background: var(--border2);
+      color: var(--text3);
+      cursor: not-allowed;
+    }
+
+    /* PAGES */
+    .page {
+      display: none;
+      padding: 20px;
+    }
+
+    .page.active {
+      display: block;
+      animation: fadeUp .2s ease;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(6px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    /* KPI */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .kpi-card.accent {
+      border-color: rgba(124, 110, 249, 0.3);
+    }
+
+    .kpi-card.danger {
+      border-color: rgba(239, 68, 68, 0.25);
+    }
+
+    .kpi-card.success {
+      border-color: rgba(34, 197, 94, 0.2);
+    }
+
+    .kpi-card.warn {
+      border-color: rgba(234, 179, 8, 0.2);
+    }
+
+    .kpi-card.blue {
+      border-color: rgba(59, 130, 246, 0.25);
+    }
+
+    .kpi-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text3);
+      font-family: var(--mono);
+      margin-bottom: 8px;
+    }
+
+    .kpi-value {
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -.5px;
+    }
+
+    .kpi-value.sm {
+      font-size: 18px;
+    }
+
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--text2);
+      margin-top: 5px;
+      font-family: var(--mono);
+    }
+
+    /* SECTION */
+    .sec-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      margin-top: 4px;
+    }
+
+    .sec-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text2);
+      font-family: var(--mono);
+    }
+
+    .sec-count {
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 11px;
+      font-family: var(--mono);
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    .sec-count.red {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .sec-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    /* TABLE */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 18px;
+      overflow-x: auto;
+      overflow-y: visible;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Tall tables get max-height with scrollable body */
+    .table-wrap.scrollable {
+      max-height: 480px;
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 500px;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+    }
+
+    thead th {
+      padding: 9px 12px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text3);
+      font-family: var(--mono);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+      white-space: nowrap;
+      /* Prevent bleed-through on scroll */
+      box-shadow: 0 1px 0 var(--border);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      transition: background .1s;
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    tbody td {
+      padding: 9px 12px;
+      font-size: 12px;
+      font-family: var(--mono);
+      vertical-align: middle;
+    }
+
+    .td-main {
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .td-muted {
+      color: var(--text2);
+    }
+
+    .td-danger {
+      color: var(--red);
+      font-weight: 700;
+    }
+
+    .td-success {
+      color: var(--green);
+    }
+
+    .td-warn {
+      color: var(--yellow);
+    }
+
+    /* TAGS */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 7px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      font-family: var(--mono);
+    }
+
+    .tag-red {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .tag-green {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .tag-yellow {
+      background: var(--yellow-soft);
+      color: var(--yellow);
+    }
+
+    .tag-purple {
+      background: rgba(124, 110, 249, 0.12);
+      color: var(--accent);
+    }
+
+    .tag-blue {
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    .tag-neutral {
+      background: var(--surface2);
+      color: var(--text2);
+    }
+
+    /* CHART */
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 18px;
+    }
+
+    .chart-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text3);
+      font-family: var(--mono);
+      margin-bottom: 14px;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 200px;
+    }
+
+    /* Legacy bar chart (analytics) */
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 120px;
+    }
+
+    .bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .bar-fill {
+      width: 100%;
+      border-radius: 3px 3px 0 0;
+      background: linear-gradient(180deg, var(--accent), rgba(124, 110, 249, 0.4));
+      min-height: 3px;
+      cursor: pointer;
+    }
+
+    .bar-day {
+      font-size: 9px;
+      color: var(--text3);
+      font-family: var(--mono);
+    }
+
+    /* AI BOX */
+    .ai-box {
+      background: rgba(124, 110, 249, 0.04);
+      border: 1px solid rgba(124, 110, 249, 0.18);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      font-size: 13px;
+      line-height: 1.8;
+      position: relative;
+    }
+
+    .ai-label {
+      position: absolute;
+      top: -10px;
+      left: 14px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-family: var(--mono);
+    }
+
+    .ai-loading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text2);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    /* FILTER */
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .filter-chip {
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--mono);
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--text2);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+
+    .filter-chip.active {
+      border-color: var(--red);
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    /* ORDERS */
+    .orders-grid {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 14px;
+    }
+
+    .order-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all .15s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .order-card:active {
+      background: var(--surface2);
+    }
+
+    .order-card.selected {
+      border-color: var(--accent);
+      background: rgba(124, 110, 249, 0.04);
+    }
+
+    .order-num {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--accent);
+      font-family: var(--mono);
+      width: 44px;
+      flex-shrink: 0;
+    }
+
+    .order-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .order-title {
+      font-weight: 700;
+      font-size: 12px;
+      margin-bottom: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .order-meta {
+      font-size: 10px;
+      color: var(--text2);
+      font-family: var(--mono);
+    }
+
+    .order-amt {
+      font-weight: 800;
+      font-size: 14px;
+      font-family: var(--mono);
+      flex-shrink: 0;
+    }
+
+    .order-detail {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      position: sticky;
+      top: 58px;
+      max-height: calc(100dvh - 80px);
+      overflow-y: auto;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-row .lbl {
+      color: var(--text2);
+    }
+
+    .detail-total {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0 0;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    /* MISC */
+    .demo-banner {
+      background: rgba(234, 179, 8, 0.07);
+      border: 1px solid rgba(234, 179, 8, 0.2);
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--yellow);
+      margin-bottom: 14px;
+    }
+
+    .demo-banner.hidden {
+      display: none;
+    }
+
+    .notice {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-family: var(--mono);
+      color: var(--text2);
+      margin-bottom: 14px;
+      line-height: 1.7;
+    }
+
+    .notice code {
+      color: var(--accent);
+    }
+
+    .risk-bar {
+      height: 3px;
+      background: var(--surface2);
+      border-radius: 2px;
+      margin-top: 5px;
+      overflow: hidden;
+    }
+
+    .risk-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width .5s ease;
+    }
+
+    .empty {
+      padding: 30px;
+      text-align: center;
+      color: var(--text3);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    /* REPORT */
+    .report-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+
+    .report-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      font-family: var(--mono);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .report-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      font-size: 13px;
+    }
+
+    .report-row:last-child {
+      border-bottom: none;
+    }
+
+    .report-row .val {
+      font-weight: 700;
+      font-family: var(--mono);
+    }
+
+    .report-row.total {
+      font-size: 15px;
+      font-weight: 800;
+      padding-top: 12px;
+      border-top: 1px solid var(--border2);
+    }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .report-box {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .report-box .v {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .report-box .l {
+      font-size: 10px;
+      color: var(--text3);
+      font-family: var(--mono);
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+
+    .report-print-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 20px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 14px;
+    }
+
+    /* OVERLAY for mobile sidebar */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 99;
+    }
+
+    /* INSTALL BANNER */
+    .install-banner {
+      background: rgba(124, 110, 249, 0.08);
+      border: 1px solid rgba(124, 110, 249, 0.2);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-family: var(--mono);
+      color: var(--text2);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .install-banner.hidden {
+      display: none;
+    }
+
+    /* CHARTS GRID */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+
+
+    /* Sticky page header — KPI карточки остаются видны при скролле */
+    .page-sticky {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: var(--bg);
+      padding-bottom: 8px;
+      margin: -20px -20px 0;
+      padding: 12px 20px 8px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 14px;
+    }
+
+    @media(max-width:768px) {
+      .page-sticky {
+        margin: -12px -12px 0;
+        padding: 10px 12px 8px;
+      }
+    }
+
+    /* DATE BAR */
+    .date-presets {
+      display: flex;
+      gap: 4px;
+    }
+
+    .date-chip {
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--mono);
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--text2);
+      border-radius: 20px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .15s;
+    }
+
+    .date-chip.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    .date-chip:active { opacity: 0.7; }
+
+    .date-inputs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .date-sep {
+      font-size: 11px;
+      color: var(--text3);
+      font-family: var(--mono);
+    }
+
+    /* MOBILE */
+    @media(max-width:768px) {
+      :root { --sidebar: 260px; }
+
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .28s cubic-bezier(.4,0,.2,1);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-overlay.open { display: block; }
+      .main { margin-left: 0; }
+      .menu-toggle { display: flex; }
+
+      /* topbar rows */
+      .topbar-row1 {
+        padding: 8px 12px;
+        min-height: 52px;
+      }
+      .topbar-row2 {
+        padding: 6px 12px 0;
+        gap: 6px;
+      }
+      .topbar-row3 {
+        padding: 6px 12px 8px;
+      }
+
+      .topbar-title { font-size: 13px; }
+
+      /* date presets — full width row */
+      .date-presets { flex: 1; gap: 4px; }
+      .date-chip {
+        flex: 1;
+        text-align: center;
+        padding: 8px 4px;
+        font-size: 12px;
+        min-height: 36px;
+      }
+
+      /* date inputs row3 — full width */
+      .topbar-row3 {
+        width: 100%;
+      }
+      .date-inputs {
+        width: 100%;
+        margin-left: 0;
+      }
+      .date-inputs input[type="date"] {
+        flex: 1;
+        max-width: none !important;
+        font-size: 14px !important;
+        padding: 8px 6px;
+        text-align: center;
+      }
+
+      /* load btn stays compact */
+      .load-btn#loadBtn {
+        padding: 8px 14px;
+        font-size: 12px;
+      }
+
+      /* pages */
+      .page { padding: 12px; }
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .charts-grid { grid-template-columns: 1fr; }
+      .orders-grid { grid-template-columns: 1fr; }
+      .report-grid { grid-template-columns: 1fr 1fr; }
+      table { min-width: 400px; }
+
+      /* order detail bottom sheet */
+      .order-detail {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        top: auto;
+        bottom: 0;
+        max-height: 82dvh;
+        border-radius: 16px 16px 0 0;
+        border: 1px solid var(--border2);
+        background: var(--surface);
+        overflow-y: auto;
+        padding: 20px 16px 32px;
+      }
+      .order-detail.mobile-open {
+        display: block;
+        animation: slideUp .25s ease;
+      }
+      @keyframes slideUp {
+        from { transform: translateY(100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .order-detail-close { display: flex; }
+    }
+
+    @media(max-width:390px) {
+      .kpi-value { font-size: 17px; }
+      .kpi-card { padding: 10px 12px; }
+      .page { padding: 8px; }
+      .topbar-title { font-size: 12px; }
+      .date-chip { font-size: 11px; padding: 7px 2px; }
+    }
+
+
+    /* Prevent iOS zoom on input focus — font-size must be >= 16px */
+    @media(max-width:768px) {
+      input, select, textarea, input[type="date"] {
+        font-size: 16px !important;
+        -webkit-text-size-adjust: 100%;
+      }
+    }
+
+    @media print {
+      /* Force white background everywhere */
+      *, *::before, *::after {
+        color: #111 !important;
+        background: white !important;
+        background-color: white !important;
+        border-color: #ddd !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .sidebar,
+      .topbar,
+      .topbar-row1,
+      .topbar-row2,
+      .topbar-row3,
+      .filter-row,
+      .ai-box,
+      .report-print-btn,
+      .install-banner,
+      .demo-banner,
+      .page-sticky,
+      .sidebar-overlay,
+      #orderDetailOverlay,
+      #sidebarOverlay {
+        display: none !important;
+      }
+
+      .main { margin-left: 0 !important; }
+
+      /* Show only active page, but report shows all its sections */
+      .page { display: none !important; }
+      .page.active { display: block !important; }
+      #page-report { display: block !important; }
+
+      body {
+        background: white !important;
+        color: #111 !important;
+        font-size: 12px;
+        padding: 0 !important;
+      }
+
+      .report-section {
+        border: 1px solid #bbb !important;
+        background: white !important;
+        break-inside: avoid;
+        margin-bottom: 12px;
+        padding: 14px;
+      }
+
+      .report-title {
+        color: #333 !important;
+        border-bottom: 1px solid #ccc !important;
+      }
+
+      .kpi-card {
+        border: 1px solid #ccc !important;
+        background: #f9f9f9 !important;
+        break-inside: avoid;
+      }
+
+      .kpi-label, .kpi-sub { color: #666 !important; }
+      .kpi-value { color: #111 !important; }
+
+      .td-success { color: #1a7a3a !important; }
+      .td-danger  { color: #cc0000 !important; }
+      .td-warn    { color: #996600 !important; }
+      .td-muted   { color: #555 !important; }
+
+      table { border-collapse: collapse !important; width: 100%; }
+      thead th {
+        background: #eee !important;
+        color: #333 !important;
+        border-bottom: 2px solid #ccc !important;
+        padding: 6px 8px;
+        font-size: 10px;
+      }
+      tbody td { padding: 5px 8px; border-bottom: 1px solid #eee !important; }
+
+      .tag { border: 1px solid #ccc !important; background: #f0f0f0 !important; color: #333 !important; }
+      .tag-red    { border-color: #e88 !important; background: #fee !important; color: #900 !important; }
+      .tag-green  { border-color: #8c8 !important; background: #efe !important; color: #060 !important; }
+      .tag-yellow { border-color: #cc8 !important; background: #ffe !important; color: #660 !important; }
+
+      .report-box { background: #f5f5f5 !important; border: 1px solid #ddd !important; }
+      .report-box .v { color: #444 !important; }
+
+      a { color: #333 !important; }
+
+      @page {
+        margin: 15mm;
+        size: A4 portrait;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <div class="sidebar-overlay" id="orderDetailOverlay" onclick="closeOrderDetail()"></div>
+
+  <div id="setupView">
+    <div class="setup-card">
+      <div class="setup-logo">P365 · CONTROL PANEL</div>
+      <div class="setup-title">Подключение</div>
+      <div class="setup-sub">Введите API ключ заведения.<br>Найти в Paloma:
+        <code>Предприятие → Управление → Настройки → API AUTHKEY</code></div>
+      <div class="field"><label>API AuthKey</label><input type="password" id="apiKeyInput"
+          placeholder="Вставьте ключ..." autocomplete="off" /></div>
+      <div class="field"><label>Название заведения</label><input type="text" id="venueNameInput"
+          placeholder="Например: Balyq Je" /></div>
+      <div class="field">
+        <label>Proxy URL <span
+            style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(необязательно)</span></label>
+        <input type="text" id="proxyUrlInput" placeholder="Вставьте ссылку..."
+          autocomplete="off" />
+        <div style="font-size:10px;color:var(--text3);margin-top:5px;font-family:var(--mono);line-height:1.6">Нужен для
+          работы без CORS-расширения.</div>
+      </div>
+      <button class="btn-primary" onclick="connectAPI()" id="connectBtn">Подключить</button>
+      <div class="err" id="setupErr"></div>
+      <div style="text-align:center;margin-top:14px;"><button class="btn-ghost" onclick="enterDemo()">Войти в
+          демо-режиме</button></div>
+    </div>
+  </div>
+
+  <div id="appView">
+    <div class="layout">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+          <div class="mark">P365</div>
+          <div class="name">Control</div>
+          <div class="venue" id="venueName">—</div>
+        </div>
+        <nav class="nav">
+          <div class="nav-sec">Обзор</div>
+          <div class="nav-item active" onclick="goPage('analytics')" id="nav-analytics"><span
+              class="nav-icon"></span><span>Аналитика</span></div>
+          <div class="nav-item" onclick="goPage('charts')" id="nav-charts"><span
+              class="nav-icon"></span><span>Графики</span></div>
+          <div class="nav-item" onclick="goPage('report')" id="nav-report"><span
+              class="nav-icon"></span><span>Итоговый отчёт</span></div>
+          <div class="nav-item" onclick="goPage('shifts')" id="nav-shifts"><span class="nav-icon"></span><span>Кассы /
+              Смены</span></div>
+          <div class="nav-sec">Контроль</div>
+          <div class="nav-item" onclick="goPage('danger')" id="nav-danger"><span class="nav-icon"></span><span>Опасные
+              операции</span><span class="badge" id="dangerBadge" style="display:none">0</span></div>
+          <div class="nav-item" onclick="goPage('cashiers')" id="nav-cashiers"><span
+              class="nav-icon"></span><span>Официанты</span></div>
+          <div class="nav-sec">Продажи</div>
+          <div class="nav-item" onclick="goPage('live')" id="nav-live"><span class="nav-icon"></span><span>Онлайн
+              заказы</span><span class="badge" id="liveBadge" style="display:none;background:var(--green)"></span>
+          </div>
+          <div class="nav-item" onclick="goPage('orders')" id="nav-orders"><span class="nav-icon"></span><span>Заказы
+              / Счёт</span></div>
+          <div class="nav-item" onclick="goPage('menu')" id="nav-menu"><span class="nav-icon"></span><span>Топ
+              меню</span></div>
+          <div class="nav-item" onclick="goPage('realization')" id="nav-realization"><span class="nav-icon"></span><span>Акт реализации</span></div>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="conn-row">
+            <div class="conn-dot" id="connDot"></div><span id="connLabel">—</span>
+          </div>
+          <button class="btn-ghost" style="width:100%;font-size:11px;padding:7px;" onclick="logout()">Выйти</button>
+        </div>
+      </aside>
+
+      <div class="main">
+        <div class="topbar">
+          <div class="topbar-row1">
+            <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Меню">
+              <svg width="20" height="20" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect y="4" width="22" height="2.5" rx="1.25" fill="currentColor"/>
+                <rect y="10" width="22" height="2.5" rx="1.25" fill="currentColor"/>
+                <rect y="16" width="22" height="2.5" rx="1.25" fill="currentColor"/>
+              </svg>
+            </button>
+            <div class="topbar-title" id="pageTitle">Аналитика <span>/ обзор</span></div>
+            <button class="load-btn" onclick="loadData()" id="loadBtn">↺ Загрузить</button>
+          </div>
+          <div class="topbar-row2">
+            <div class="date-presets">
+              <button class="date-chip active" onclick="setPreset('today',this)">Сегодня</button>
+              <button class="date-chip" onclick="setPreset('week',this)">Неделя</button>
+              <button class="date-chip" onclick="setPreset('month',this)">Месяц</button>
+            </div>
+          </div>
+          <div class="topbar-row3">
+            <div class="date-inputs">
+              <input type="date" id="dateFrom" onchange="clearPreset()" />
+              <span class="date-sep">—</span>
+              <input type="date" id="dateTo" onchange="clearPreset()" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ANALYTICS -->
+        <div class="page active" id="page-analytics">
+          <div class="demo-banner hidden" id="demoBanner">Демо-режим — данные тестовые.</div>
+          <div class="install-banner hidden" id="installBanner">
+            <span> Установите приложение на телефон</span>
+            <button class="load-btn" onclick="installPWA()" style="padding:6px 12px;font-size:11px;">Установить</button>
+          </div>
+          <div class="page-sticky">
+          <div class="kpi-grid">
+            <div class="kpi-card accent">
+              <div class="kpi-label">Выручка</div>
+              <div class="kpi-value" id="kpi-revenue">—</div>
+              <div class="kpi-sub" id="kpi-rev-sub">₸ за период</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Заказов закрыто</div>
+              <div class="kpi-value" id="kpi-receipts">—</div>
+              <div class="kpi-sub" id="kpi-receipts-sub"></div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Средний чек</div>
+              <div class="kpi-value sm" id="kpi-avg">—</div>
+              <div class="kpi-sub">₸ / заказ</div>
+            </div>
+            <div class="kpi-card success">
+              <div class="kpi-label">Наличные</div>
+              <div class="kpi-value sm" id="kpi-cash">—</div>
+              <div class="kpi-sub" id="kpi-cash-sub"></div>
+            </div>
+            <div class="kpi-card blue">
+              <div class="kpi-label">Безнал</div>
+              <div class="kpi-value sm" id="kpi-card-pay">—</div>
+              <div class="kpi-sub" id="kpi-card-sub"></div>
+            </div>
+            <div class="kpi-card danger">
+              <div class="kpi-label">Отмены / Возвраты</div>
+              <div class="kpi-value" id="kpi-cancels">—</div>
+              <div class="kpi-sub" id="kpi-cancels-sub"></div>
+            </div>
+            <div class="kpi-card warn">
+              <div class="kpi-label">Скидки итого</div>
+              <div class="kpi-value sm" id="kpi-discounts">—</div>
+              <div class="kpi-sub" id="kpi-disc-sub"></div>
+            </div>
+            <div class="kpi-card danger">
+              <div class="kpi-label">Сумма отказов</div>
+              <div class="kpi-value sm" id="kpi-refuse-sum-analytics">—</div>
+              <div class="kpi-sub" id="kpi-refuse-sub"></div>
+            </div>
+          </div>
+          </div><!-- /page-sticky -->
+          <div class="chart-card">
+            <div class="chart-label">Выручка по дням, ₸</div>
+            <div class="bar-chart" id="revenueChart">
+              <div class="empty">нет данных</div>
+            </div>
+          </div>
+          <div id="aiInsight"></div>
+        </div>
+
+        <!-- CHARTS -->
+        <div class="page" id="page-charts">
+          <div class="charts-grid">
+            <div class="chart-card">
+              <div class="chart-label">Выручка по дням</div>
+              <div class="chart-container"><canvas id="chartRevDay"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-label">Заказов по часам</div>
+              <div class="chart-container"><canvas id="chartByHour"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-label">Выручка по сотрудникам</div>
+              <div class="chart-container"><canvas id="chartByEmp"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="chart-label">Нал vs Безнал</div>
+              <div class="chart-container"><canvas id="chartPayType"></canvas></div>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-label">Топ-10 блюд по выручке</div>
+            <div class="chart-container" style="height:280px"><canvas id="chartTopDishes"></canvas></div>
+          </div>
+        </div>
+
+        <!-- REPORT -->
+        <div class="page" id="page-report">
+          <button class="report-print-btn" onclick="window.print()"> Распечатать отчёт</button>
+          <div class="report-section">
+            <div class="report-title">Выручка и продажи</div>
+            <div class="report-grid">
+              <div class="report-box">
+                <div class="v" id="rep-rev">—</div>
+                <div class="l">ВЫРУЧКА ₸</div>
+              </div>
+              <div class="report-box">
+                <div class="v" id="rep-orders">—</div>
+                <div class="l">ЗАКАЗОВ</div>
+              </div>
+              <div class="report-box">
+                <div class="v" id="rep-avg">—</div>
+                <div class="l">СРЕДНИЙ ЧЕК</div>
+              </div>
+              <div class="report-box">
+                <div class="v" id="rep-items">—</div>
+                <div class="l">БЛЮД ПРОДАНО</div>
+              </div>
+            </div>
+            <div class="report-row"><span>Выручка</span><span class="val td-success" id="rep-rev2">—</span></div>
+            <div class="report-row"><span>Средний чек</span><span class="val" id="rep-avg2">—</span></div>
+            <div class="report-row"><span>Закрытых заказов</span><span class="val" id="rep-closed">—</span></div>
+            <div class="report-row"><span>Открытых (незакрытых)</span><span class="val td-warn" id="rep-open">—</span>
+            </div>
+            <div class="report-row"><span>Гостей (кол-во)</span><span class="val" id="rep-guests">—</span></div>
+          </div>
+          <div class="report-section">
+            <div class="report-title">Оплата</div>
+            <div class="report-row"><span>Наличные</span><span class="val td-success" id="rep-cash">—</span></div>
+            <div class="report-row"><span>Безналичные</span><span class="val td-success" id="rep-card">—</span></div>
+            <div class="report-row"><span>Скидки (итого)</span><span class="val td-warn" id="rep-disc">—</span></div>
+            <div class="report-row"><span>Сервисный сбор</span><span class="val" id="rep-service">—</span></div>
+          </div>
+          <div class="report-section">
+            <div class="report-title">Контроль</div>
+            <div class="report-row"><span>Отказов от блюд</span><span class="val td-danger" id="rep-refuses">—</span>
+            </div>
+            <div class="report-row"><span>Сумма отказов</span><span class="val td-danger" id="rep-refuse-sum">—</span>
+            </div>
+            <div class="report-row"><span>Скидок выдано</span><span class="val td-warn" id="rep-disccnt">—</span></div>
+            <div class="report-row"><span>Сотрудников</span><span class="val" id="rep-empcnt">—</span></div>
+          </div>
+          <div class="report-section">
+            <div class="report-title">Топ-5 блюд</div>
+            <div id="rep-top5">—</div>
+          </div>
+          <div class="report-section">
+            <div class="report-title">По сотрудникам</div>
+            <div class="table-wrap" style="margin-bottom:0">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Сотрудник</th>
+                    <th>Чеков</th>
+                    <th>Выручка</th>
+                    <th>Ср.чек</th>
+                    <th>Отказов</th>
+                  </tr>
+                </thead>
+                <tbody id="rep-emp-table">
+                  <tr>
+                    <td colspan="5" class="empty">Нет данных</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SHIFTS -->
+        <div class="page" id="page-shifts">
+          <div class="notice">Смены загружаются через <code>changesOut</code>. При отсутствии данных — строится по
+            заказам.</div>
+          <div id="shiftsNote"></div>
+          <div class="kpi-grid">
+            <div class="kpi-card success">
+              <div class="kpi-label">Смен за период</div>
+              <div class="kpi-value" id="kpi-shifts">—</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Нал (итого)</div>
+              <div class="kpi-value sm" id="kpi-sh-cash">—</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Безнал (итого)</div>
+              <div class="kpi-value sm" id="kpi-sh-card">—</div>
+            </div>
+            <div class="kpi-card danger">
+              <div class="kpi-label">С расхождением</div>
+              <div class="kpi-value" id="kpi-sh-diff">—</div>
+            </div>
+          </div>
+          <div class="sec-head">
+            <div class="sec-title">Смены</div>
+            <div class="sec-count" id="shiftCount">0</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Дата</th>
+                  <th>Кассир</th>
+                  <th>Открыта</th>
+                  <th>Закрыта</th>
+                  <th>Выручка</th>
+                  <th>Нал</th>
+                  <th>Безнал</th>
+                  <th>Расхождение</th>
+                  <th>Статус</th>
+                </tr>
+              </thead>
+              <tbody id="shiftsTable">
+                <tr>
+                  <td colspan="9" class="empty">Загрузите данные</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- DANGER -->
+        <div class="page" id="page-danger">
+          <div class="page-sticky">
+            <div class="kpi-grid">
+              <div class="kpi-card danger">
+                <div class="kpi-label">Подозр. операций</div>
+                <div class="kpi-value" id="kpi-d-total">—</div>
+                <div class="kpi-sub" id="kpi-d-sub"></div>
+              </div>
+              <div class="kpi-card danger">
+                <div class="kpi-label">Сумма отмен</div>
+                <div class="kpi-value sm" id="kpi-d-sum">—</div>
+              </div>
+              <div class="kpi-card warn">
+                <div class="kpi-label">Сумма скидок</div>
+                <div class="kpi-value sm" id="kpi-d-disc">—</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Официантов</div>
+                <div class="kpi-value" id="kpi-d-cashiers">—</div>
+              </div>
+              <div class="kpi-card danger">
+                <div class="kpi-label">Отказов</div>
+                <div class="kpi-value" id="kpi-d-reject">—</div>
+              </div>
+            </div>
+            <div class="filter-row" style="margin-bottom:0">
+              <button class="filter-chip active" onclick="filterDanger(this,'all')">Все</button>
+              <button class="filter-chip" onclick="filterDanger(this,'cancel')">Отмены</button>
+              <button class="filter-chip" onclick="filterDanger(this,'discount')">Скидки</button>
+              <button class="filter-chip" onclick="filterDanger(this,'delete')">Удаления</button>
+              <button class="filter-chip" onclick="filterDanger(this,'return')">Возвраты</button>
+              <button class="filter-chip" onclick="filterDanger(this,'reject')">Отказ</button>
+            </div>
+          </div>
+          <div class="sec-head">
+            <div class="sec-title">Операции</div>
+            <div class="sec-count red" id="dangerCount">0</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Дата / Время</th>
+                  <th>Тип</th>
+                  <th>Сотрудник</th>
+                  <th>Сумма</th>
+                  <th>Заказ №</th>
+                  <th>Комментарий</th>
+                </tr>
+              </thead>
+              <tbody id="dangerTable">
+                <tr>
+                  <td colspan="6" class="empty">Загрузите данные</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="aiDangerInsight"></div>
+        </div>
+
+        <!-- CASHIERS -->
+        <div class="page" id="page-cashiers">
+          <div class="sec-head">
+            <div class="sec-title">Анализ официантов</div>
+            <div class="sec-count" id="waiterCount">0</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Сотрудник</th>
+                  <th>Чеков</th>
+                  <th>Выручка</th>
+                  <th>Ср. чек</th>
+                  <th>Скидки</th>
+                  <th>Отмены</th>
+                  <th>Удалений</th>
+                  <th>% проблем</th>
+                  <th>Риск</th>
+                </tr>
+              </thead>
+              <tbody id="cashierTable">
+                <tr>
+                  <td colspan="9" class="empty">Загрузите данные</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- LIVE ORDERS -->
+        <div class="page" id="page-live">
+          <div class="kpi-grid">
+            <div class="kpi-card success">
+              <div class="kpi-label">Открытых счетов</div>
+              <div class="kpi-value" id="live-open">—</div>
+            </div>
+            <div class="kpi-card accent">
+              <div class="kpi-label">Сумма открытых</div>
+              <div class="kpi-value sm" id="live-sum">—</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Закрыто сегодня</div>
+              <div class="kpi-value" id="live-closed-today">—</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Выручка сегодня</div>
+              <div class="kpi-value sm" id="live-rev-today">—</div>
+            </div>
+          </div>
+          <div
+            style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="conn-dot" id="liveDot"></div>
+              <span style="font-size:11px;font-family:var(--mono);color:var(--text2)" id="liveStatus">не запущено</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button onclick="startLive()" id="liveStartBtn" class="load-btn"> Запустить</button>
+              <button onclick="stopLive()" id="liveStopBtn" class="load-btn"
+                style="background:var(--surface2);color:var(--text2);display:none">■ Стоп</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>№</th>
+                  <th>Стол</th>
+                  <th>Сотрудник</th>
+                  <th>Открыт</th>
+                  <th>Статус</th>
+                  <th>Сумма</th>
+                  <th>Позиций</th>
+                </tr>
+              </thead>
+              <tbody id="liveTable">
+                <tr>
+                  <td colspan="7" class="empty">Нажмите "Запустить"</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ORDERS -->
+        <div class="page" id="page-orders">
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-label">Заказов за период</div>
+              <div class="kpi-value" id="kpi-ord-total">—</div>
+            </div>
+            <div class="kpi-card accent">
+              <div class="kpi-label">Закрытых</div>
+              <div class="kpi-value" id="kpi-ord-closed">—</div>
+            </div>
+            <div class="kpi-card danger">
+              <div class="kpi-label">Не закрытых</div>
+              <div class="kpi-value" id="kpi-ord-cancelled">—</div>
+            </div>
+          </div>
+          <div class="sec-head">
+            <div class="sec-title">Все заказы</div>
+            <div class="sec-count" id="ordersCount">0</div>
+            <div class="sec-actions">
+              <input type="text" id="ordersSearch" placeholder="Поиск..." oninput="searchOrders()"
+                style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:7px 10px;font-size:12px;font-family:var(--mono);border-radius:6px;outline:none;width:160px;">
+            </div>
+          </div>
+          <div class="orders-grid">
+            <div id="ordersList">
+              <div class="empty">Загрузите данные</div>
+            </div>
+            <div class="order-detail" id="orderDetail">
+              <button class="order-detail-close" id="orderDetailClose" onclick="closeOrderDetail()" style="display:none;position:sticky;top:0;background:var(--surface);border:none;color:var(--text2);font-size:12px;font-family:var(--mono);padding:4px 0 12px;cursor:pointer;width:100%;text-align:center;letter-spacing:1px;">✕ ЗАКРЫТЬ</button>
+              <div class="empty" style="padding:20px 0">Выберите заказ</div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- REALIZATION ACT -->
+        <div class="page" id="page-realization">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+            <button class="report-print-btn" onclick="printRealization()" style="margin:0">Распечатать акт</button>
+            <button class="btn-ghost" onclick="exportRealizationCSV()" style="font-size:11px;">Экспорт CSV</button>
+          </div>
+          <div class="report-section" id="realizationDoc">
+            <div class="report-title">Акт реализации</div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;font-family:var(--mono);color:var(--text2);margin-bottom:18px;flex-wrap:wrap;gap:6px;">
+              <span>Заведение: <strong id="realiz-venue" style="color:var(--text)">—</strong></span>
+              <span>Период: <strong id="realiz-period" style="color:var(--text)">—</strong></span>
+              <span>Дата формирования: <strong id="realiz-date" style="color:var(--text)">—</strong></span>
+            </div>
+            <div class="kpi-grid" style="margin-bottom:18px;">
+              <div class="kpi-card accent">
+                <div class="kpi-label">Итого выручка</div>
+                <div class="kpi-value sm" id="realiz-total">—</div>
+              </div>
+              <div class="kpi-card success">
+                <div class="kpi-label">Позиций продано</div>
+                <div class="kpi-value" id="realiz-qty">—</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Наименований</div>
+                <div class="kpi-value" id="realiz-names">—</div>
+              </div>
+              <div class="kpi-card warn">
+                <div class="kpi-label">Скидки</div>
+                <div class="kpi-value sm" id="realiz-disc">—</div>
+              </div>
+            </div>
+            <div class="sec-head" style="margin-top:0">
+              <div class="sec-title">Реестр реализованных блюд</div>
+              <div class="sec-count" id="realizCount">0</div>
+              <div class="sec-actions">
+                <input type="text" id="realizSearch" placeholder="Поиск блюда..." oninput="filterRealization()"
+                  style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:6px 10px;font-size:12px;font-family:var(--mono);border-radius:6px;outline:none;width:160px;">
+              </div>
+            </div>
+            <div class="table-wrap" style="margin-bottom:14px;">
+              <table id="realizTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Наименование блюда</th>
+                    <th>Кол-во</th>
+                    <th>Цена за ед., ₸</th>
+                    <th>Сумма, ₸</th>
+                    <th>Доля, %</th>
+                  </tr>
+                </thead>
+                <tbody id="realizBody">
+                  <tr><td colspan="6" class="empty">Загрузите данные</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="display:flex;justify-content:flex-end;padding:12px 0;border-top:1px solid var(--border2);">
+              <div style="text-align:right;">
+                <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:4px;">ИТОГО</div>
+                <div style="font-size:20px;font-weight:800;color:var(--accent)" id="realiz-grand">—</div>
+              </div>
+            </div>
+            <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:14px;line-height:1.8;">
+              Акт составлен на основании данных системы P365 / Paloma365.<br>
+              Подпись ответственного лица: _________________________ / _________________________
+            </div>
+          </div>
+        </div>
+        <!-- MENU -->
+        <div class="page" id="page-menu">
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-label">Позиций в топе</div>
+              <div class="kpi-value" id="kpi-menu-items">—</div>
+            </div>
+            <div class="kpi-card accent">
+              <div class="kpi-label">Топ-1 блюдо</div>
+              <div class="kpi-value sm" id="kpi-menu-top">—</div>
+            </div>
+          </div>
+          <div class="sec-head">
+            <div class="sec-title">Топ блюд по выручке</div>
+            <div class="sec-count" id="menuCount">0</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Блюдо</th>
+                  <th>Кол-во</th>
+                  <th>Выручка</th>
+                  <th>Доля</th>
+                </tr>
+              </thead>
+              <tbody id="menuTable">
+                <tr>
+                  <td colspan="5" class="empty">Загрузите данные</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="sec-head">
+            <div class="sec-title">Продажи по часам</div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-label">Заказов по часу дня</div>
+            <div class="bar-chart" id="hourChart">
+              <div class="empty">нет данных</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── STATE ──
+    let API_KEY = '', HOST = 'https://proxy.paloma365.com', isDemo = false;
+    let allOrders = [], allCancels = [], allReturns = [], allShifts = [], allDanger = [], allUnlocks = [], allRejects = [], allSellings = [], allLogs = [];
+    let currentOrders = [], selectedOrder = null, dangerFilter = 'all';
+    let empMap = {}, itemMap = {}, objectMap = {};
+    let chartInstances = {};
+
+    // ── PWA ──
+    let deferredInstall = null;
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault(); deferredInstall = e;
+      document.getElementById('installBanner')?.classList.remove('hidden');
+    });
+    function installPWA() { if (deferredInstall) { deferredInstall.prompt(); deferredInstall.userChoice.then(() => { deferredInstall = null; document.getElementById('installBanner')?.classList.add('hidden'); }); } }
+
+    // Inline PWA manifest
+    const manifest = { name: 'P365 Control', short_name: 'P365', start_url: '.', display: 'standalone', background_color: '#0d0d0f', theme_color: '#0d0d0f', icons: [{ src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="%237c6ef9"/><rect x="18" y="28" width="64" height="8" rx="4" fill="%23fff" opacity=".95"/><rect x="18" y="46" width="44" height="8" rx="4" fill="%23fff" opacity=".7"/><rect x="18" y="64" width="52" height="8" rx="4" fill="%23fff" opacity=".5"/><circle cx="76" cy="68" r="16" fill="%230d0d0f"/><text x="70" y="73" font-size="16" font-family="monospace" font-weight="bold" fill="%237c6ef9">₸</text></svg>', sizes: 'any', type: 'image/svg+xml' }] };
+    const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+    document.getElementById('pwaManifest').href = URL.createObjectURL(blob);
+
+    // ── UTILS ──
+    window.onload = () => {
+      const k = localStorage.getItem('p365key');
+      const proxy = localStorage.getItem('p365proxy');
+      const venue = localStorage.getItem('p365venue');
+      if (proxy) { HOST = proxy; }
+      if (k) {
+        API_KEY = k;
+        document.getElementById('venueName').textContent = venue || '—';
+        // Restore inputs in case user goes back to setup
+        document.getElementById('proxyUrlInput').value = proxy || '';
+        showApp(false);
+        loadData(); // автозагрузка данных при возврате
+      }
+      const today = new Date();
+      document.getElementById('dateTo').value = fd(today);
+      document.getElementById('dateFrom').value = fd(today);
+    };
+    function fd(d) { return d.toISOString().split('T')[0]; }
+    function fp(s, end = false) { if (!s) return ''; const [y, m, d] = s.split('-'); return `${d}.${m}.${y} ${end ? '23:59:59' : '00:00:00'}`; }
+    function fm(v) { return (isNaN(v) || v == null) ? '—' : Math.round(parseFloat(v)).toLocaleString('ru-RU') + ' ₸'; }
+    function fn(v) { return (isNaN(v) || v == null) ? '—' : Math.round(parseFloat(v)).toLocaleString('ru-RU'); }
+    function set(id, val) { const el = document.getElementById(id); if (el) el.innerHTML = val; }
+
+
+    // ── DATE PRESETS ──
+    function setPreset(range, btn) {
+      const today = new Date();
+      let from = new Date(today), to = new Date(today);
+      if (range === 'week') { from.setDate(today.getDate() - 6); }
+      else if (range === 'month') { from.setDate(1); }
+      document.getElementById('dateFrom').value = fd(from);
+      document.getElementById('dateTo').value = fd(to);
+      document.querySelectorAll('.date-chip').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      loadData();
+    }
+    function clearPreset() {
+      document.querySelectorAll('.date-chip').forEach(b => b.classList.remove('active'));
+    }
+
+    // ── MOBILE SIDEBAR ──
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('open'); }
+    function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('open'); }
+
+    // ── AUTH ──
+    async function connectAPI() {
+      const key = document.getElementById('apiKeyInput').value.trim();
+      const venue = document.getElementById('venueNameInput').value.trim() || 'Заведение';
+      const proxy = document.getElementById('proxyUrlInput').value.trim().replace(/\/$/, '');
+      if (!key) { document.getElementById('setupErr').textContent = 'Введите ключ'; return; }
+      const btn = document.getElementById('connectBtn'); btn.disabled = true; btn.textContent = 'Проверка...';
+      // Set proxy if provided
+      if (proxy) { HOST = proxy; localStorage.setItem('p365proxy', proxy); }
+      try {
+        API_KEY = key;
+        const r = await pPost('guide2xml', 'to_file', { 'tables[0]': 's_employee', 'output_format': 'json' });
+        if (r?.s_employee) Object.values(r.s_employee).forEach(e => { const uid = e.UID || e.uid; const name = [e.lastname, e.firstname, e.middlename].filter(Boolean).join(' ') || e.name || e.fullname || uid; if (uid) empMap[uid] = name; });
+        localStorage.setItem('p365key', key); localStorage.setItem('p365venue', venue);
+        document.getElementById('venueName').textContent = venue;
+        showApp(false); loadData();
+      } catch (e) {
+        document.getElementById('setupErr').innerHTML = `Ошибка: ${e.message}<br><span style="color:var(--text2);font-size:11px">${HOST !== 'https://proxy.paloma365.com' ? 'Проверьте Proxy URL.' : 'Убедитесь что включено CORS-расширение и ключ верный.'}</span>`;
+        btn.disabled = false; btn.textContent = 'Подключить';
+      }
+    }
+    function enterDemo() { isDemo = true; document.getElementById('venueName').textContent = 'Демо'; showApp(true); loadDataDemo(); }
+    function showApp(demo) { document.getElementById('setupView').style.display = 'none'; document.getElementById('appView').style.display = 'block'; setConn(demo ? 'demo' : 'live', demo ? 'демо-режим' : 'подключено'); if (demo) document.getElementById('demoBanner').classList.remove('hidden'); }
+    function logout() { localStorage.clear(); API_KEY = ''; isDemo = false; stopLive(); document.getElementById('appView').style.display = 'none'; document.getElementById('setupView').style.display = 'flex'; setConn('', '—'); }
+    function setConn(t, l) { document.getElementById('connDot').className = 'conn-dot' + (t ? ' ' + t : ''); document.getElementById('connLabel').textContent = l; }
+
+    // ── API ──
+    async function pPost(cls, method, bodyParams = {}, key = null) {
+      const qs = new URLSearchParams({ class: cls, method, authkey: key || API_KEY });
+      const resp = await fetch(`${HOST}/company/api/?${qs}`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(bodyParams).toString() });
+      const text = await resp.text();
+      if (!text || !text.trim()) return null;
+      try { return JSON.parse(text); } catch (e) { throw new Error('Не JSON: ' + text.slice(0, 80)); }
+    }
+    async function pGet(params = {}) {
+      const qs = new URLSearchParams({ ...params, authkey: API_KEY });
+      const resp = await fetch(`${HOST}/company/api/?${qs}`, { method: 'GET' });
+      const text = await resp.text();
+      if (!text || !text.trim()) return null;
+      try { return JSON.parse(text); } catch (e) { return null; }
+    }
+
+    // ── GUIDES ──
+    function eName(guid) {
+      if (!guid || guid === '0' || guid === 0) return '—';
+      if (empMap[guid]) return empMap[guid];
+      const clean = guid.replace(/[{}]/g, '').toUpperCase();
+      for (const [k, v] of Object.entries(empMap)) { if (k.replace(/[{}]/g, '').toUpperCase() === clean) return v; }
+      return guid.replace(/[{}]/g, '').slice(0, 8) + '…';
+    }
+    function iName(guid) {
+      if (!guid || guid === '0') return null;
+      if (itemMap[guid]) return itemMap[guid];
+      const clean = guid.replace(/[{}]/g, '').toUpperCase();
+      for (const [k, v] of Object.entries(itemMap)) { if (k.replace(/[{}]/g, '').toUpperCase() === clean) return v; }
+      return null;
+    }
+    function tName(guid) {
+      if (!guid || guid === '0' || guid === 0) return null;
+      if (objectMap[guid]) return objectMap[guid];
+      const clean = guid.replace(/[{}]/g, '').toUpperCase();
+      for (const [k, v] of Object.entries(objectMap)) { if (k.replace(/[{}]/g, '').toUpperCase() === clean) return v; }
+      return null;
+    }
+    function oNum(o) { const n = o.idout || o.wpid || o.idlink || o.id || '—'; if (String(n).length > 8 && o.idout) return o.idout; return String(n); }
+    async function loadEmployees() {
+      try { const r = await pPost('guide2xml', 'to_file', { 'tables[0]': 's_employee', 'output_format': 'json' }); empMap = {}; Object.values(r?.s_employee || {}).forEach(e => { const uid = e.UID || e.uid || e.id; const name = [e.lastname, e.firstname, e.middlename].filter(Boolean).join(' ') || e.name || e.fullname || uid; if (uid) empMap[uid] = name; }); console.log('empMap:', Object.keys(empMap).length); } catch (e) { console.warn('Employees:', e.message); }
+    }
+    async function loadGuides() {
+      try {
+        const [iR, oR] = await Promise.all([pPost('guide2xml', 'to_file', { 'tables[0]': 's_items', 'output_format': 'json' }), pPost('guide2xml', 'to_file', { 'tables[0]': 's_objects', 'output_format': 'json' })]);
+        itemMap = {}; Object.values(iR?.s_items || {}).forEach(it => { const uid = it.UID || it.uid; if (uid && it.name) itemMap[uid] = it.name; });
+        objectMap = {}; Object.values(oR?.s_objects || {}).forEach(ob => { const uid = ob.UID || ob.uid; if (uid && ob.name) objectMap[uid] = ob.name; });
+        console.log('itemMap:', Object.keys(itemMap).length, 'objectMap:', Object.keys(objectMap).length);
+      } catch (e) { console.warn('Guides:', e.message); }
+    }
+
+    // ── LOAD DATA ──
+    async function loadData() {
+      if (isDemo) { loadDataDemo(); return; }
+      const from = document.getElementById('dateFrom').value, to = document.getElementById('dateTo').value;
+      if (!from || !to) return;
+      const btn = document.getElementById('loadBtn'); btn.disabled = true; btn.textContent = '...';
+      setConn('live', 'загрузка...');
+      const p1 = fp(from, false), p2 = fp(to, true);
+      try {
+        if (!Object.keys(empMap).length) await loadEmployees();
+        if (!Object.keys(itemMap).length || !Object.keys(objectMap).length) await loadGuides();
+        const [oR, cR, rR, sR, selR, logR] = await Promise.all([
+          pPost('xml_exchange_data\\outDocuments', 'to_file', { 'without_guides': 'yes', 'chb': 'zaperiod', 'chb_zaperiod1': p1, 'chb_zaperiod2': p2, 'tables[0]': 'd_order', 'output_format': 'json' }),
+          pPost('xml_exchange_data\\outDocuments', 'to_file', { 'without_guides': 'yes', 'chb': 'zaperiod', 'chb_zaperiod1': p1, 'chb_zaperiod2': p2, 'tables[0]': 'd_cancellation', 'output_format': 'json' }),
+          pPost('xml_exchange_data\\outDocuments', 'to_file', { 'without_guides': 'yes', 'chb': 'zaperiod', 'chb_zaperiod1': p1, 'chb_zaperiod2': p2, 'tables[0]': 'd_return_from_covenantee', 'output_format': 'json' }),
+          pPost('xml_exchange_data\\changesOut', 'to_file', { 'chb_smenperiod1': p1, 'chb_smenperiod2': p2, 'output_format': 'json' }),
+          pPost('xml_exchange_data\\outDocuments', 'to_file', { 'chb': 'zaperiod', 'chb_zaperiod1': p1, 'chb_zaperiod2': p2, 'tables[0]': 'd_selling', 'output_format': 'json' }),
+          (async () => { try { const url = `https://proxy.paloma365.com/company/warehouse/warehouse.php?do=get_table_grid&table=z_syslog&_search=true&rows=1000&page=1&sidx=date&sord=desc`; const r = await fetch(url, { credentials: 'include' }); return JSON.parse(await r.text()); } catch (e) { return null; } })()
+        ]);
+        allOrders = oR?.documents?.d_order?.rows || [];
+        allCancels = cR?.documents?.d_cancellation?.rows || [];
+        allReturns = rR?.documents?.d_return_from_covenantee?.rows || [];
+        allSellings = selR?.documents?.d_selling?.rows || [];
+        allUnlocks = []; allRejects = [];
+        // Log from warehouse
+        const rawLog = logR?.rows || [];
+        const dFrom = p1.split(' ')[0].split('.').reverse().join('-'), dTo = p2.split(' ')[0].split('.').reverse().join('-');
+        allLogs = rawLog.filter(e => { const d = (e.date || '').slice(0, 10); return d >= dFrom && d <= dTo; });
+        if (!allLogs.length && rawLog.length) allLogs = rawLog;
+        // Shifts
+        const rawShifts = sR?.d_changes?.rows || sR?.documents?.d_shifts?.rows || (Array.isArray(sR) ? sR : []);
+        allShifts = Array.isArray(rawShifts) ? rawShifts.map(sh => ({ ...sh, date: (sh.dtopen || sh.date || sh.dt || '').split(' ')[0], opendt: sh.dtopen || sh.dt || '', closedt: sh.dtclosed || sh.dtclose || '', revenue: parseFloat(sh.revenue || sh.totalsum || 0), cash: parseFloat(sh.cash || 0), cardPayment: parseFloat(sh.cardPayment || sh.card || 0), diff: parseFloat(sh.diff || 0), _cashierName: sh._cashierName || eName(sh.employeeid || sh.cashierid) || '—', status: (sh.closed === '1' || sh.closed === true) ? 'ok' : 'warn' })) : [];
+        // Payment guide
+        let payGuide = {};
+        try { const pgR = await pPost('guide2xml', 'to_file', { 'tables[0]': 's_types_of_payment', 'output_format': 'json' }); Object.entries(pgR?.s_types_of_payment || {}).forEach(([id, pt]) => { const name = (pt.name || '').toLowerCase(); payGuide[pt.UID || id] = name.includes('нал') || name.includes('cash') ? 'cash' : 'card'; }); } catch (e) { }
+        // Resolve orders
+        allOrders.forEach(o => {
+          o._empName = eName(o.employeeid || o.emp_pay);
+          const rt = o.objectid || ''; o._table = tName(rt) || rt || '—';
+          const pid = o.paymentid || ''; o._payType = payGuide[pid] || guessPay(o);
+          o._deletedItems = []; o._refusedItems = [];
+          (o.t_order || []).forEach(it => {
+            if (!it.itemname || it.itemname === '?' || it.itemname === null) it.itemname = iName(it.itemid) || it.name || '—';
+            if (String(it.mark_deleted) === '1') o._deletedItems.push(it);
+            const refIdStr = String(it.refuse_id ?? '').trim();
+            const hasRef = refIdStr && refIdStr !== '0' && refIdStr !== 'null';
+            if (hasRef || parseFloat(it.quantity || 0) < 0 || parseFloat(it.salesum || 0) < 0) o._refusedItems.push(it);
+          });
+        });
+        allCancels.forEach(c => { c._empName = eName(c.employeeid || c.emp_id || c.cashierid); });
+        allReturns.forEach(r => { r._empName = eName(r.employeeid || r.emp_id); });
+        renderAll();
+        setConn('live', `обновлено ${new Date().toLocaleTimeString('ru-RU')} · ${allOrders.length} заказов`);
+      } catch (e) {
+        setConn('err', 'ошибка: ' + e.message); console.error(e); loadDataDemo();
+      } finally { btn.disabled = false; btn.textContent = '↺ Загрузить'; }
+    }
+    function guessPay(o) { if (o.cash !== undefined) return parseFloat(o.cash || 0) > 0 ? 'cash' : 'card'; if (o.payment_type) return String(o.payment_type).toLowerCase().includes('нал') ? 'cash' : 'card'; return 'unknown'; }
+
+    // ── DEMO DATA ──
+    function loadDataDemo() {
+      setConn('demo', 'демо-режим'); document.getElementById('demoBanner').classList.remove('hidden');
+      const from = document.getElementById('dateFrom').value || '2026-03-28', to = document.getElementById('dateTo').value || '2026-04-03';
+      const days = getDays(from, to);
+      const emps = [{ id: 'e01', name: 'Айгерим К.' }, { id: 'e02', name: 'Серик Б.' }, { id: 'e03', name: 'Дина Н.' }, { id: 'e04', name: 'Марат У.' }];
+      const dishes = [{ name: 'Сазан жареный', price: 3200 }, { name: 'Карп запечённый', price: 4500 }, { name: 'Судак на гриле', price: 5200 }, { name: 'Уха из осетра', price: 3800 }, { name: 'Плов казахский', price: 2400 }, { name: 'Лагман рыбный', price: 1800 }, { name: 'Самса с рыбой', price: 900 }, { name: 'Чай казахский', price: 500 }, { name: 'Шашлык из осетра', price: 6500 }, { name: 'Салат Астана', price: 1200 }];
+      const tables = ['Стол 1', 'Стол 2', 'Стол 3', 'Стол 4', 'VIP 1', 'Бар', 'Терраса'];
+      allOrders = []; allCancels = []; allReturns = []; allShifts = []; allUnlocks = []; allRejects = []; allSellings = []; allLogs = [];
+      let oid = 1;
+      days.forEach((day, di) => {
+        const emp = emps[di % emps.length]; const cnt = 18 + Math.floor(Math.random() * 22);
+        for (let i = 0; i < cnt; i++) {
+          const items = []; let total = 0;
+          for (let j = 0; j < 1 + Math.floor(Math.random() * 4); j++) { const d = dishes[Math.floor(Math.random() * dishes.length)]; const qty = 1 + Math.floor(Math.random() * 3); total += d.price * qty; items.push({ itemname: d.name, quantity: String(qty), price: String(d.price), salesum: String(d.price * qty) }); }
+          const disc = Math.random() < 0.13 ? Math.round(total * 0.1) : 0; const closed = Math.random() > 0.04 ? '1' : '0';
+          const h = 10 + Math.floor(Math.random() * 12), m = Math.floor(Math.random() * 60);
+          const dt = `${day} ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
+          allOrders.push({ id: String(oid), idout: String(oid++), creationdt: dt, dtclose: closed === '1' ? dt : null, closed, conducted: closed, employeeid: emp.id, _empName: emp.name, discountsum: String(disc), discountpercent: disc > 0 ? '10' : '0', totalsum: String(total - disc), sumfromclient: String(total - disc), _payType: Math.random() < 0.55 ? 'cash' : 'card', _table: tables[Math.floor(Math.random() * tables.length)], t_order: items, _deletedItems: [], _refusedItems: Math.random() < 0.1 ? [{ itemname: dishes[Math.floor(Math.random() * 3)].name, quantity: '-1', salesum: '-' + (500 + Math.floor(Math.random() * 2000)) }] : [], note: '' });
+        }
+        if (Math.random() < 0.6) { for (let i = 0; i < 1 + Math.floor(Math.random() * 3); i++) { const d = dishes[Math.floor(Math.random() * dishes.length)]; const h2 = 10 + Math.floor(Math.random() * 12), m2 = Math.floor(Math.random() * 60); allCancels.push({ id: String(9000 + allCancels.length), dt: `${day} ${String(h2).padStart(2, '0')}:${String(m2).padStart(2, '0')}:00`, employeeid: emp.id, _empName: emp.name, total: String(d.price), note: ['Ошибка кассира', 'Гость передумал', ''][Math.floor(Math.random() * 3)] }); } }
+        if (Math.random() < 0.25) { const d = dishes[Math.floor(Math.random() * dishes.length)]; allReturns.push({ id: String(8000 + allReturns.length), dt: `${day} 14:00:00`, employeeid: emp.id, _empName: emp.name, total: String(d.price), note: '' }); }
+        const dayOk = allOrders.filter(o => o.creationdt?.startsWith(day) && o.closed === '1');
+        const rev = dayOk.reduce((s, o) => s + parseFloat(o.totalsum || 0), 0);
+        const cash = dayOk.filter(o => o._payType === 'cash').reduce((s, o) => s + parseFloat(o.totalsum || 0), 0);
+        allShifts.push({ date: day, _cashierName: emp.name, opendt: `${day} 09:00:00`, closedt: `${day} 23:00:00`, revenue: rev, cash, cardPayment: rev - cash, diff: Math.random() < 0.2 ? Math.round((Math.random() - .5) * 3000) : 0, status: 'ok' });
+      });
+      renderAll();
+    }
+    function getDays(from, to) { const days = []; let d = new Date(from), end = new Date(to); while (d <= end) { days.push(fd(d)); d.setDate(d.getDate() + 1); } return days; }
+
+    // ── RENDER ALL ──
+    function renderAll() { renderAnalytics(); renderCharts(); renderReport(); renderShifts(); renderDanger(); renderCashiers(); renderOrders(); renderMenu(); renderRealization(); }
+
+    // ── ANALYTICS ──
+    function renderAnalytics() {
+      const closed = allOrders.filter(o => o.closed === '1' || o.conducted === '1');
+      const rev = closed.reduce((s, o) => s + parseFloat(o.totalsum || o.sumfromclient || 0), 0);
+      const avg = closed.length ? rev / closed.length : 0;
+      const disc = closed.reduce((s, o) => s + parseFloat(o.discountsum || 0), 0);
+      const cancelSum = allCancels.reduce((s, c) => s + parseFloat(c.total || c.totalsum || 0), 0);
+      const retSum = allReturns.reduce((s, r) => s + parseFloat(r.total || r.totalsum || 0), 0);
+      const cashOrders = closed.filter(o => o._payType === 'cash');
+      const cash = cashOrders.reduce((s, o) => s + parseFloat(o.totalsum || 0), 0);
+      const card = rev - cash;
+      const payResolved = cashOrders.length > 0;
+      set('kpi-revenue', fn(rev)); set('kpi-rev-sub', `₸ · ${closed.length} заказов`);
+      set('kpi-receipts', fn(closed.length)); set('kpi-receipts-sub', `всего ${allOrders.length} создано`);
+      set('kpi-avg', fn(avg));
+      if (payResolved) { set('kpi-cash', fn(cash)); set('kpi-cash-sub', rev > 0 ? `${(cash / rev * 100).toFixed(0)}% от выручки` : ''); set('kpi-card-pay', fn(card)); set('kpi-card-sub', rev > 0 ? `${(card / rev * 100).toFixed(0)}% от выручки` : ''); }
+      else { set('kpi-cash', '—'); set('kpi-cash-sub', 'нет данных'); set('kpi-card-pay', fn(rev)); set('kpi-card-sub', 'все платежи'); }
+      set('kpi-cancels', allCancels.length + allReturns.length); set('kpi-cancels-sub', (cancelSum + retSum) > 0 ? `на ${fm(cancelSum + retSum)}` : '');
+      set('kpi-discounts', fn(disc)); set('kpi-disc-sub', rev > 0 && disc > 0 ? `${(disc / rev * 100).toFixed(1)}% от выручки` : ''); const refuseSumA = allOrders.reduce((s, o) => s + (o._refusedItems || []).reduce((ss, it) => ss + Math.abs(parseFloat(it.salesum || 0)), 0), 0); set('kpi-refuse-sum-analytics', fm(refuseSumA)); set('kpi-refuse-sub', refuseSumA > 0 ? `${allOrders.reduce((s,o)=>s+(o._refusedItems||[]).length,0)} позиций` : '');
+      const byDay = {}; closed.forEach(o => { const d = (o.creationdt || o.dtclose || '').split(' ')[0]; if (d && d !== '0000-00-00') byDay[d] = (byDay[d] || 0) + parseFloat(o.totalsum || 0); });
+      const days = Object.keys(byDay).sort(), vals = days.map(d => byDay[d]), maxV = Math.max(...vals, 1);
+      document.getElementById('revenueChart').innerHTML = days.length === 0 ? '<div class="empty">нет данных</div>' : days.map((d, i) => { const pct = Math.max(4, Math.round(vals[i] / maxV * 100)); return `<div class="bar-col" title="${d}: ${fm(vals[i])}"><div class="bar-fill" style="height:${pct}%"></div><div class="bar-day">${d.slice(5)}</div></div>`; }).join('');
+      generateAI(rev, closed.length, avg, allCancels.length + allReturns.length, disc, 'aiInsight');
+    }
+
+    // ── CHARTS (Chart.js) ──
+    function mkChart(id, type, data, opts = {}) {
+      if (chartInstances[id]) { chartInstances[id].destroy(); }
+      const ctx = document.getElementById(id)?.getContext('2d');
+      if (!ctx) return;
+      chartInstances[id] = new Chart(ctx, { type, data, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#8888a0', font: { size: 11 } } }, tooltip: { callbacks: { label: ctx => fm(ctx.raw) } } }, scales: type === 'pie' || type === 'doughnut' ? undefined : { x: { ticks: { color: '#8888a0', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }, y: { ticks: { color: '#8888a0', font: { size: 10 }, callback: v => fn(v) }, grid: { color: 'rgba(255,255,255,0.04)' } } }, animation: { duration: 400 }, ...opts } });
+    }
+    function renderCharts() {
+      const closed = allOrders.filter(o => o.closed === '1' || o.conducted === '1');
+      if (!closed.length) return;
+      // Revenue by day
+      const byDay = {}; closed.forEach(o => { const d = (o.creationdt || '').split(' ')[0]; if (d && d !== '0000-00-00') byDay[d] = (byDay[d] || 0) + parseFloat(o.totalsum || 0); });
+      const days = Object.keys(byDay).sort();
+      mkChart('chartRevDay', 'bar', { labels: days.map(d => d.slice(5)), datasets: [{ label: 'Выручка', data: days.map(d => byDay[d]), backgroundColor: 'rgba(124,110,249,0.7)', borderRadius: 4 }] }, { plugins: { tooltip: { callbacks: { label: ctx => fm(ctx.raw) } }, legend: { display: false } } });
+      // By hour
+      const bh = Array(24).fill(0); closed.forEach(o => { const h = parseInt((o.creationdt || '').split(' ')[1]?.split(':')[0]); if (!isNaN(h)) bh[h]++; });
+      mkChart('chartByHour', 'line', { labels: Array.from({ length: 24 }, (_, i) => i + ':00'), datasets: [{ label: 'Заказов', data: bh, borderColor: '#7c6ef9', backgroundColor: 'rgba(124,110,249,0.15)', fill: true, tension: 0.4, pointRadius: 3 }] }, { plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.raw + ' заказов' } } } });
+      // By employee
+      const empRev = {}; closed.forEach(o => { const n = o._empName || '—'; empRev[n] = (empRev[n] || 0) + parseFloat(o.totalsum || 0); });
+      const empSorted = Object.entries(empRev).sort((a, b) => b[1] - a[1]).slice(0, 8);
+      mkChart('chartByEmp', 'bar', { labels: empSorted.map(e => e[0]), datasets: [{ label: 'Выручка', data: empSorted.map(e => e[1]), backgroundColor: 'rgba(34,197,94,0.7)', borderRadius: 4 }] }, { indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fm(ctx.raw) } } } });
+      // Pay type
+      const cashSum = closed.filter(o => o._payType === 'cash').reduce((s, o) => s + parseFloat(o.totalsum || 0), 0);
+      const cardSum = closed.filter(o => o._payType !== 'cash').reduce((s, o) => s + parseFloat(o.totalsum || 0), 0);
+      mkChart('chartPayType', 'doughnut', { labels: ['Наличные', 'Безнал'], datasets: [{ data: [cashSum, cardSum], backgroundColor: ['rgba(34,197,94,0.8)', 'rgba(59,130,246,0.8)'], borderWidth: 0 }] }, { plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: ctx => fm(ctx.raw) } } } });
+      // Top dishes
+      const dm = {}; closed.forEach(o => (o.t_order || []).forEach(it => { let n = it.itemname; if (!n || n === '?') n = iName(it.itemid) || '—'; if (parseFloat(it.quantity || 0) > 0) { if (!dm[n]) dm[n] = { qty: 0, sum: 0 }; dm[n].qty += parseFloat(it.quantity || 1); dm[n].sum += parseFloat(it.salesum || 0); } }));
+      const top = Object.entries(dm).sort((a, b) => b[1].sum - a[1].sum).slice(0, 10);
+      mkChart('chartTopDishes', 'bar', { labels: top.map(([n]) => n.length > 20 ? n.slice(0, 20) + '…' : n), datasets: [{ label: 'Выручка', data: top.map(([, v]) => v.sum), backgroundColor: 'rgba(234,179,8,0.7)', borderRadius: 4 }] }, { indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fm(ctx.raw) } } } });
+    }
+
+    // ── REPORT ──
+    function renderReport() {
+      const closed = allOrders.filter(o => o.closed === '1' || o.conducted === '1');
+      const rev = closed.reduce((s, o) => s + parseFloat(o.totalsum || 0), 0);
+      const avg = closed.length ? rev / closed.length : 0;
+      const disc = closed.reduce((s, o) => s + parseFloat(o.discountsum || 0), 0);
+      const service = closed.reduce((s, o) => s + parseFloat(o.servicesum || 0), 0);
+      const guests = closed.reduce((s, o) => s + parseInt(o.guestcount || 1), 0);
+      const totalItems = closed.reduce((s, o) => s + (o.t_order || []).filter(it => parseFloat(it.quantity || 0) > 0).reduce((ss, it) => ss + parseFloat(it.quantity || 0), 0), 0);
+      const cash = closed.filter(o => o._payType === 'cash').reduce((s, o) => s + parseFloat(o.totalsum || 0), 0);
+      const card = rev - cash;
+      const refuses = allOrders.reduce((s, o) => s + (o._refusedItems || []).length, 0);
+      const refuseSum = allOrders.reduce((s, o) => s + (o._refusedItems || []).reduce((ss, it) => ss + Math.abs(parseFloat(it.salesum || 0)), 0), 0);
+      const discCnt = allOrders.filter(o => parseFloat(o.discountsum || 0) > 0).length;
+      const empSet = new Set(closed.map(o => o.employeeid || o.emp_pay).filter(Boolean));
+      set('rep-rev', fn(rev)); set('rep-orders', fn(closed.length)); set('rep-avg', fn(avg)); set('rep-items', fn(Math.round(totalItems)));
+      set('rep-rev2', fm(rev)); set('rep-avg2', fm(avg)); set('rep-closed', fn(closed.length));
+      set('rep-open', fn(allOrders.filter(o => o.closed === '0').length)); set('rep-guests', fn(guests));
+      set('rep-cash', fm(cash)); set('rep-card', fm(card)); set('rep-disc', fm(disc)); set('rep-service', fm(service));
+      set('rep-refuses', refuses); set('rep-refuse-sum', fm(refuseSum)); set('rep-disccnt', discCnt); set('rep-empcnt', empSet.size);
+      // Top 5
+      const dm = {}; closed.forEach(o => (o.t_order || []).forEach(it => { let n = it.itemname; if (!n || n === '?') n = iName(it.itemid) || '—'; if (parseFloat(it.quantity || 0) > 0) { if (!dm[n]) dm[n] = { qty: 0, sum: 0 }; dm[n].qty += parseFloat(it.quantity || 1); dm[n].sum += parseFloat(it.salesum || 0); } }));
+      const top5 = Object.entries(dm).sort((a, b) => b[1].sum - a[1].sum).slice(0, 5);
+      document.getElementById('rep-top5').innerHTML = top5.length === 0 ? '<div style="color:var(--text3);font-size:12px">нет данных</div>' : top5.map(([n, v], i) => `<div class="report-row"><span>${i + 1}. ${n}</span><span class="val td-success">${fm(v.sum)}</span></div>`).join('');
+      // Employee table
+      const empMap2 = {};
+      closed.forEach(o => { const id = o.employeeid || o.emp_pay || '?'; if (!empMap2[id]) empMap2[id] = { name: o._empName || eName(id), count: 0, rev: 0, refuses: 0 }; empMap2[id].count++; empMap2[id].rev += parseFloat(o.totalsum || 0); empMap2[id].refuses += (o._refusedItems || []).length; });
+      const empList = Object.values(empMap2).sort((a, b) => b.rev - a.rev);
+      document.getElementById('rep-emp-table').innerHTML = empList.length === 0 ? '<tr><td colspan="5" class="empty">Нет данных</td></tr>' : empList.map(e => `<tr><td class="td-main">${e.name}</td><td>${e.count}</td><td class="td-success">${fm(e.rev)}</td><td class="td-muted">${fm(e.count ? e.rev / e.count : 0)}</td><td class="${e.refuses > 0 ? 'td-danger' : ''}">${e.refuses || '—'}</td></tr>`).join('');
+    }
+
+    // ── SHIFTS ──
+    function renderShifts() {
+      let sh = allShifts;
+      if (!sh.length && allOrders.length) {
+        const byDay = {}; allOrders.filter(o => o.closed === '1').forEach(o => { const day = (o.creationdt || '').split(' ')[0]; if (!day || day === '0000-00-00') return; if (!byDay[day]) byDay[day] = { date: day, employees: new Set(), revenue: 0, cash: 0, cardPayment: 0, diff: 0, status: 'ok' }; byDay[day].employees.add(o._empName || '—'); byDay[day].revenue += parseFloat(o.totalsum || 0); if (o._payType === 'cash') byDay[day].cash += parseFloat(o.totalsum || 0); else byDay[day].cardPayment += parseFloat(o.totalsum || 0); });
+        sh = Object.values(byDay).sort((a, b) => a.date.localeCompare(b.date)).map(s => ({ ...s, _cashierName: [...s.employees].join(', ') || '—' }));
+      }
+      const rev = sh.reduce((s, x) => s + (x.revenue || 0), 0), cash = sh.reduce((s, x) => s + (x.cash || 0), 0), card = sh.reduce((s, x) => s + (x.cardPayment || 0), 0), wd = sh.filter(x => Math.abs(x.diff || 0) > 50);
+      set('kpi-shifts', sh.length); set('kpi-sh-cash', fn(cash)); set('kpi-sh-card', fn(card)); set('kpi-sh-diff', wd.length); set('shiftCount', sh.length);
+      const noReal = allShifts.length === 0 && sh.length > 0;
+      document.getElementById('shiftsNote').innerHTML = noReal ? '<div class="notice">Данные смен из API не получены — показана сводка по заказам за каждый день.</div>' : '';
+      document.getElementById('shiftsTable').innerHTML = !sh.length ? '<tr><td colspan="9" class="empty">Нет данных</td></tr>' : sh.map(s => { const diff = s.diff || 0; const dc = diff === 0 ? `<span class="tag tag-green">норма</span>` : diff > 0 ? `<span class="tag tag-yellow">+${fn(diff)}</span>` : `<span class="tag tag-red">${fn(diff)}</span>`; const op = (s.opendt || '').split(' ')[1]?.slice(0, 5) || '—', cl = (s.closedt || '').split(' ')[1]?.slice(0, 5) || '—'; return `<tr><td class="td-main">${s.date}</td><td>${s._cashierName || eName(s.employeeid || s.cashierid) || '—'}</td><td class="td-muted">${op}</td><td class="td-muted">${cl}</td><td class="td-success">${fm(s.revenue)}</td><td>${fm(s.cash)}</td><td>${fm(s.cardPayment)}</td><td>${dc}</td><td><span class="tag ${s.status === 'ok' ? 'tag-green' : 'tag-yellow'}">${s.status === 'ok' ? 'закрыта' : 'открыта'}</span></td></tr>`; }).join('');
+    }
+
+    // ── DANGER ──
+    function renderDanger() {
+      allDanger = [];
+      allOrders.filter(o => String(o.closed) === '0').forEach(o => allDanger.push({ time: o.creationdt || '', type: 'cancel', label: 'Незакрытый заказ', cashier: o._empName || eName(o.employeeid || o.emp_pay), amount: parseFloat(o.totalsum || 0), orderId: oNum(o), comment: o.note || '' }));
+      allCancels.forEach(c => { const note = (c.note || '').toLowerCase(); const isReject = note.includes('отказ'); const items = (c.t_cancellation || c.t_cancel || []).map(it => iName(it.itemid) || it.itemname || '').filter(Boolean).join(', '); allDanger.push({ time: c.dt || '', type: isReject ? 'reject' : 'cancel', label: isReject ? 'Отказ' : 'Списание/Отмена', cashier: c._empName || eName(c.employeeid || c.emp_id || c.cashierid), amount: parseFloat(c.total || c.totalsum || 0), orderId: c.idout || c.wpid || String(c.id || '—'), comment: items || c.note || '' }); });
+      allReturns.forEach(r => allDanger.push({ time: r.dt || '', type: 'return', label: 'Возврат', cashier: r._empName || eName(r.employeeid || r.emp_id), amount: parseFloat(r.total || r.totalsum || 0), orderId: r.idout || String(r.id || '—'), comment: r.note || '' }));
+      allOrders.filter(o => parseFloat(o.discountsum || 0) > 0).forEach(o => allDanger.push({ time: o.creationdt || '', type: 'discount', label: 'Скидка', cashier: o._empName || eName(o.employeeid || o.emp_pay), amount: parseFloat(o.discountsum), orderId: oNum(o), comment: `${parseFloat(o.discountpercent || 0).toFixed(0)}%` }));
+      allOrders.forEach(o => (o._deletedItems || []).forEach(di => allDanger.push({ time: o.creationdt || '', type: 'delete', label: 'Удалено блюдо', cashier: o._empName || eName(o.employeeid || o.emp_pay), amount: parseFloat(di.salesum || di.price || 0), orderId: oNum(o), comment: di.itemname || '—' })));
+      allOrders.forEach(o => (o._refusedItems || []).forEach(ri => { const name = ri.itemname || iName(ri.itemid) || '—'; allDanger.push({ time: ri.dt || o.creationdt || '', type: 'reject', label: 'Отказ от блюда', cashier: eName(ri.employeeid || o.employeeid || o.emp_pay) || o._empName, amount: Math.abs(parseFloat(ri.salesum || ri.sum || 0)), orderId: oNum(o), comment: `${name} × ${Math.abs(parseFloat(ri.quantity || 1))}` }); }));
+      allLogs.forEach(e => { const tn = e.type_name || ''; const user = e.userid_name || '—'; const time = e.date || ''; const rawData = String(e.data || ''); const comment = parseLogData(rawData) || rawData.slice(0, 80); const orderNum = parseLogOrderId(comment) || '—'; if (tn.includes('Разблок')) allDanger.push({ time, type: 'unlock', label: 'Разблокировка счёта', cashier: user, amount: 0, orderId: orderNum, comment }); else if (tn.includes('Отказ')) allDanger.push({ time, type: 'reject', label: 'Отказ (журнал)', cashier: user, amount: 0, orderId: orderNum, comment }); });
+      allDanger.sort((a, b) => b.time.localeCompare(a.time));
+      const total = allDanger.length, cs = allDanger.filter(d => d.type === 'cancel' || d.type === 'return').reduce((s, d) => s + d.amount, 0), ds = allDanger.filter(d => d.type === 'discount').reduce((s, d) => s + d.amount, 0), rj = allDanger.filter(d => d.type === 'reject').length;
+      set('kpi-d-total', total); set('kpi-d-sub', `из ${allOrders.length} заказов`); set('kpi-d-sum', fm(cs)); set('kpi-d-disc', fm(ds)); set('kpi-d-cashiers', new Set(allDanger.map(d => d.cashier)).size); set('kpi-d-reject', rj);
+      const badge = document.getElementById('dangerBadge'); if (total > 0) { badge.textContent = total; badge.style.display = 'block'; } else badge.style.display = 'none';
+      renderDangerTable(); if (total > 0) generateDangerAI();
+    }
+    function renderDangerTable() {
+      const ops = dangerFilter === 'all' ? allDanger : allDanger.filter(d => d.type === dangerFilter);
+      set('dangerCount', ops.length);
+      const tm = { cancel: 'tag-red', return: 'tag-red', discount: 'tag-yellow', delete: 'tag-yellow', unlock: 'tag-purple', reject: 'tag-red' };
+      document.getElementById('dangerTable').innerHTML = ops.length === 0 ? '<tr><td colspan="6" class="empty">Операций не найдено</td></tr>' : ops.map(o => `<tr><td class="td-muted">${o.time.slice(0, 16)}</td><td><span class="tag ${tm[o.type] || 'tag-neutral'}">${o.label}</span></td><td>${o.cashier}</td><td class="${o.amount > 0 ? 'td-danger' : ''}">${o.amount > 0 ? fm(o.amount) : '—'}</td><td class="td-muted">#${o.orderId}</td><td class="td-muted" style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${o.comment || '—'}</td></tr>`).join('');
+    }
+    function filterDanger(btn, f) { dangerFilter = f; document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderDangerTable(); }
+
+    // ── CASHIERS ──
+    function riskScore(c) { return c.cancels * 18 + c.returns * 15 + c.deletes * 6 + c.refuses * 8 + (c.discounts > 5000 ? 12 : 0); }
+    function renderCashiers() {
+      const map = {};
+      allOrders.forEach(o => { const id = o.employeeid || o.emp_pay || '?'; if (!id || id === '?') return; if (!map[id]) map[id] = { id, name: o._empName || eName(id), count: 0, revenue: 0, discounts: 0, cancels: 0, returns: 0, deletes: 0, refuses: 0 }; if (o.closed === '1') { map[id].count++; map[id].revenue += parseFloat(o.totalsum || 0); map[id].discounts += parseFloat(o.discountsum || 0); } else map[id].cancels++; map[id].deletes += (o._deletedItems || []).length; map[id].refuses += (o._refusedItems || []).length; });
+      allCancels.forEach(c => { const id = c.employeeid || c.emp_id || '?'; if (!map[id]) return; map[id].cancels++; });
+      allReturns.forEach(r => { const id = r.employeeid || r.emp_id || '?'; if (!map[id]) return; map[id].returns++; });
+      const list = Object.values(map).sort((a, b) => b.revenue - a.revenue); set('waiterCount', list.length);
+      const maxR = Math.max(...list.map(riskScore), 1);
+      document.getElementById('cashierTable').innerHTML = !list.length ? '<tr><td colspan="9" class="empty">Загрузите данные</td></tr>' : list.map(c => { const avg = c.count ? Math.round(c.revenue / c.count) : 0; const problems = c.cancels + c.returns + c.deletes + c.refuses; const pct = Math.round(problems / Math.max(c.count + problems, 1) * 100); const risk = riskScore(c); const rp = Math.round(risk / maxR * 100); const rc = risk > 60 ? 'var(--red)' : risk > 30 ? 'var(--yellow)' : 'var(--green)'; const rt = risk > 60 ? 'tag-red' : risk > 30 ? 'tag-yellow' : 'tag-green'; return `<tr><td class="td-main">${c.name}</td><td>${c.count}</td><td class="td-success">${fm(c.revenue)}</td><td class="td-muted">${fm(avg)}</td><td class="${c.discounts > 0 ? 'td-warn' : ''}">${c.discounts > 0 ? fm(c.discounts) : '—'}</td><td class="${c.cancels > 0 ? 'td-danger' : ''}">${c.cancels || '—'}</td><td class="${c.deletes + c.refuses > 0 ? 'td-warn' : ''}">${c.deletes + c.refuses || '—'}</td><td>${pct}%</td><td><span class="tag ${rt}">${risk > 60 ? 'высокий' : risk > 30 ? 'средний' : 'низкий'}</span><div class="risk-bar"><div class="risk-fill" style="width:${rp}%;background:${rc}"></div></div></td></tr>`; }).join('');
+    }
+
+    // ── ORDERS ──
+    function renderOrders() { currentOrders = [...allOrders].reverse(); set('kpi-ord-total', allOrders.length); set('kpi-ord-closed', allOrders.filter(o => o.closed === '1').length); set('kpi-ord-cancelled', allOrders.filter(o => o.closed === '0').length); set('ordersCount', currentOrders.length); renderOrdersList(currentOrders); }
+    function renderOrdersList(orders) {
+      const el = document.getElementById('ordersList');
+      if (!orders.length) { el.innerHTML = '<div class="empty">Нет заказов</div>'; return; }
+      el.innerHTML = orders.map(o => { const st = o.closed === '0' ? '<span class="tag tag-red">Не закрыт</span>' : '<span class="tag tag-green">Оплачен</span>'; const dn = oNum(o); return `<div class="order-card ${selectedOrder?.id === o.id ? 'selected' : ''}" onclick="selectOrder('${o.id}')"><div class="order-num">#${dn}</div><div class="order-info"><div class="order-title">${o._table || tName(o.objectid) || '—'} · ${o._empName || eName(o.employeeid || o.emp_pay)}</div><div class="order-meta">${(o.creationdt || '').slice(0, 16)} · ${o._payType === 'cash' ? 'Нал' : 'Безнал'}</div><div style="margin-top:3px">${st}</div></div><div class="order-amt ${o.closed === '0' ? 'td-danger' : ''}">${fm(parseFloat(o.totalsum || 0))}</div></div>`; }).join('');
+    }
+    function closeOrderDetail() {
+      const panel = document.getElementById('orderDetail');
+      panel.classList.remove('mobile-open');
+      document.getElementById('orderDetailOverlay').classList.remove('open');
+      document.getElementById('orderDetailClose').style.display = 'none';
+    }
+    function selectOrder(id) {
+      selectedOrder = allOrders.find(o => o.id === id); if (!selectedOrder) return;
+      renderOrdersList(currentOrders); const o = selectedOrder;
+      const isMobile = window.innerWidth <= 768;
+      const panel = document.getElementById('orderDetail');
+      if (isMobile) { panel.classList.add('mobile-open'); document.getElementById('orderDetailOverlay').classList.add('open'); document.getElementById('orderDetailClose').style.display = 'block'; }
+      document.getElementById('orderDetail').innerHTML = `<button class="order-detail-close" id="orderDetailClose" onclick="closeOrderDetail()" style="${isMobile ? '' : 'display:none;'}position:sticky;top:0;background:var(--surface);border:none;color:var(--text2);font-size:12px;font-family:var(--mono);padding:4px 0 12px;cursor:pointer;width:100%;text-align:center;letter-spacing:1px;">✕ ЗАКРЫТЬ</button>` + `<h3 style="font-size:13px;font-weight:800;margin-bottom:12px">Заказ #${oNum(o)}</h3><div class="detail-row"><span class="lbl">Создан</span><span>${(o.creationdt || '').slice(0, 16)}</span></div><div class="detail-row"><span class="lbl">Закрыт</span><span>${(o.dtclose || '').slice(0, 16) || '—'}</span></div><div class="detail-row"><span class="lbl">Сотрудник</span><span>${eName(o.employeeid || o.emp_pay)}</span></div><div class="detail-row"><span class="lbl">Стол</span><span>${o._table || tName(o.objectid) || '—'}</span></div><div class="detail-row"><span class="lbl">Оплата</span><span>${o._payType === 'cash' ? 'Наличные' : 'Безнал'}</span></div><div class="detail-row"><span class="lbl">Статус</span><span>${o.closed === '1' ? 'Оплачен' : 'Не закрыт'}</span></div><div style="margin:10px 0 5px;font-size:10px;color:var(--text3);letter-spacing:1.5px;font-family:var(--mono);text-transform:uppercase">Состав</div>${(o.t_order || []).filter(it => parseFloat(it.quantity || 0) > 0).map(it => `<div class="detail-row"><span>${it.itemname || '—'} × ${parseFloat(it.quantity || 1)}</span><span>${fm(parseFloat(it.salesum || it.sum || 0))}</span></div>`).join('')}${parseFloat(o.discountsum || 0) > 0 ? `<div class="detail-row"><span class="lbl">Скидка ${o.discountpercent || 0}%</span><span class="td-warn">−${fm(parseFloat(o.discountsum))}</span></div>` : ''}${(o._refusedItems || []).length > 0 ? `<div style="margin:8px 0 4px;font-size:10px;color:var(--red);font-family:var(--mono)">ОТКАЗЫ</div>${(o._refusedItems || []).map(ri => `<div class="detail-row" style="opacity:.7"><span>${ri.itemname || '—'} × ${Math.abs(parseFloat(ri.quantity || 1))}</span><span class="td-danger">−${fm(Math.abs(parseFloat(ri.salesum || 0)))}</span></div>`).join('')}` : ''}${(o._deletedItems || []).length > 0 ? `<div style="margin:8px 0 4px;font-size:10px;color:var(--red);font-family:var(--mono)">УДАЛЕНО</div>${(o._deletedItems || []).map(di => `<div class="detail-row" style="opacity:.6"><span>${di.itemname || '—'}</span><span class="td-danger">удалено</span></div>`).join('')}` : ''}<div class="detail-total"><span>Итого</span><span>${fm(parseFloat(o.totalsum || o.sumfromclient || 0))}</span></div>`;
+    }
+    function searchOrders() { const q = document.getElementById('ordersSearch').value.toLowerCase(); const f = q ? allOrders.filter(o => String(o.idout || o.id || '').includes(q) || (o._empName || '').toLowerCase().includes(q) || (o._table || '').toLowerCase().includes(q)) : [...allOrders].reverse(); currentOrders = f; set('ordersCount', f.length); renderOrdersList(f); }
+
+    // ── MENU ──
+    function renderMenu() {
+      const closed = allOrders.filter(o => o.closed === '1' || o.conducted === '1'); const dm = {};
+      closed.forEach(o => (o.t_order || []).forEach(it => { let n = it.itemname; if (!n || n === '?' || n === null) n = iName(it.itemid) || '?'; const qty = parseFloat(it.quantity || 1); const sum = parseFloat(it.salesum || it.sum || 0); if (qty > 0) { if (!dm[n]) dm[n] = { qty: 0, sum: 0 }; dm[n].qty += qty; dm[n].sum += sum; } }));
+      const real = Object.entries(dm).filter(([n]) => n !== '?'); const top = (real.length > 0 ? real : Object.entries(dm)).sort((a, b) => b[1].sum - a[1].sum).slice(0, 15);
+      const ts = top.reduce((s, [, v]) => s + v.sum, 0) || 1;
+      set('kpi-menu-items', top.length); set('kpi-menu-top', top[0] ? top[0][0] : '—'); set('menuCount', top.length);
+      document.getElementById('menuTable').innerHTML = !top.length ? '<tr><td colspan="5" class="empty">Нет данных</td></tr>' : top.map(([name, v], i) => { const pct = Math.round(v.sum / ts * 100); const bw = Math.round(v.sum / ts * 80); return `<tr><td class="td-muted">${i + 1}</td><td class="td-main">${name}</td><td>${Math.round(v.qty)}</td><td class="td-success">${fm(v.sum)}</td><td style="text-align:right"><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end"><div style="height:4px;width:${bw}px;background:var(--accent);border-radius:2px;opacity:.7;flex-shrink:0"></div><span class="td-muted">${pct}%</span></div></td></tr>`; }).join('');
+      const bh = Array(24).fill(0); closed.forEach(o => { const h = parseInt((o.creationdt || '').split(' ')[1]?.split(':')[0]); if (!isNaN(h)) bh[h]++; }); const maxH = Math.max(...bh, 1);
+      document.getElementById('hourChart').innerHTML = bh.slice(9, 24).map((v, i) => { const h = i + 9; const pct = Math.max(4, Math.round(v / maxH * 100)); return `<div class="bar-col" title="${h}:00 — ${v} заказов"><div class="bar-fill" style="height:${pct}%"></div><div class="bar-day">${h}</div></div>`; }).join('');
+    }
+
+    // ── LIVE ORDERS ──
+    let liveInterval = null, liveKnownIds = new Set();
+    function startLive() {
+      if (isDemo) {
+        // In demo, show simulated live data
+        document.getElementById('liveStartBtn').style.display = 'none';
+        document.getElementById('liveStopBtn').style.display = '';
+        document.getElementById('liveDot').className = 'conn-dot demo';
+        document.getElementById('liveStatus').textContent = 'демо-режим';
+        renderLive(allOrders);
+        return;
+      }
+      document.getElementById('liveStartBtn').style.display = 'none';
+      document.getElementById('liveStopBtn').style.display = '';
+      document.getElementById('liveDot').className = 'conn-dot live';
+      document.getElementById('liveStatus').textContent = 'подключение...';
+      fetchLive();
+      liveInterval = setInterval(fetchLive, 20000);
+    }
+    function stopLive() { clearInterval(liveInterval); liveInterval = null; document.getElementById('liveStartBtn').style.display = ''; document.getElementById('liveStopBtn').style.display = 'none'; document.getElementById('liveDot').className = 'conn-dot'; document.getElementById('liveStatus').textContent = 'остановлено'; document.getElementById('liveBadge').style.display = 'none'; }
+    async function fetchLive() {
+      try {
+        document.getElementById('liveStatus').textContent = 'обновление...';
+
+        // d_order_online — реальные активные заказы через Tester API
+        // Это отдельный endpoint от d_order, показывает открытые заказы в реальном времени
+        let orders = [];
+        let source = '';
+
+        // Попытка 1: d_order_online через Tester class
+        try {
+          const r1 = await pGet({ class: 'Tester', method: 'order_online' });
+          if (r1 && (Array.isArray(r1) || r1.rows || r1.orders)) {
+            orders = r1.rows || r1.orders || (Array.isArray(r1) ? r1 : []);
+            source = 'Tester/order_online';
+          }
+        } catch (e) { console.log('Tester order_online failed:', e.message); }
+
+        // Попытка 2: guide2xml с d_order_online
+        if (!orders.length) {
+          try {
+            const today = fd(new Date()), p1 = fp(today, false), p2 = fp(today, true);
+            const r2 = await pPost('xml_exchange_data\\outDocuments', 'to_file', {
+              'without_guides': 'yes', 'chb': 'zaperiod',
+              'chb_zaperiod1': p1, 'chb_zaperiod2': p2,
+              'tables[0]': 'd_order_online', 'output_format': 'json'
+            });
+            if (r2?.documents?.d_order_online?.rows?.length) {
+              orders = r2.documents.d_order_online.rows;
+              source = 'd_order_online';
+            }
+          } catch (e) { console.log('d_order_online failed:', e.message); }
+        }
+
+        // Попытка 3: обычный d_order за сегодня (fallback)
+        if (!orders.length) {
+          const today = fd(new Date()), p1 = fp(today, false), p2 = fp(today, true);
+          const r3 = await pPost('xml_exchange_data\\outDocuments', 'to_file', {
+            'without_guides': 'yes', 'chb': 'zaperiod',
+            'chb_zaperiod1': p1, 'chb_zaperiod2': p2,
+            'tables[0]': 'd_order', 'output_format': 'json'
+          });
+          orders = r3?.documents?.d_order?.rows || [];
+          source = 'd_order (fallback)';
+        }
+
+        console.log('Live source:', source, '| orders:', orders.length);
+
+        // Detect new open orders
+        const newIds = orders.filter(o => !liveKnownIds.has(o.id || o.UID) && (o.closed === '0' || o.isClosed === 'false' || o.isClosed === false));
+        if (liveKnownIds.size > 0 && newIds.length > 0) notifyNew(newIds.length);
+        orders.forEach(o => liveKnownIds.add(o.id || o.UID));
+
+        // Resolve names
+        orders.forEach(o => {
+          if (!o._empName) o._empName = eName(o.employeeid || o.emp_pay || o.userid) || o.emp_name || '—';
+          if (!o._table) {
+            const rt = o.objectid || o.object_id || '';
+            o._table = tName(rt) || o.objectname || o.object_name || o.tablename || rt || '—';
+          }
+          // Normalize closed field — d_order_online may use different field names
+          if (o.isClosed !== undefined) o.closed = (o.isClosed === 'true' || o.isClosed === true) ? '1' : '0';
+          if (o.status !== undefined && o.closed === undefined) o.closed = (o.status === 'closed' || o.status === '1') ? '1' : '0';
+        });
+
+        renderLive(orders);
+        document.getElementById('liveStatus').textContent = `обновлено ${new Date().toLocaleTimeString('ru-RU')} · [${source}] · авто 20 сек`;
+      } catch (e) {
+        document.getElementById('liveStatus').textContent = 'ошибка: ' + e.message;
+        console.error('fetchLive error:', e);
+      }
+    }
+    function notifyNew(n) { const b = document.getElementById('liveBadge'); b.textContent = n + ' новых'; b.style.display = 'block'; setTimeout(() => b.style.display = 'none', 5000); try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); const g = ctx.createGain(); osc.connect(g); g.connect(ctx.destination); osc.frequency.value = 880; g.gain.value = 0.3; osc.start(); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4); osc.stop(ctx.currentTime + 0.4); } catch (e) { } }
+    function renderLive(orders) {
+      // d_order_online may use isClosed instead of closed
+      const open = orders.filter(o => o.closed === '0' || o.isClosed === 'false' || o.isClosed === false);
+      const closedT = orders.filter(o => o.closed === '1' || o.isClosed === 'true' || o.isClosed === true);
+      const openSum = open.reduce((s, o) => s + parseFloat(o.totalsum || o.subtotal || o.total || 0), 0);
+      const todayRev = closedT.reduce((s, o) => s + parseFloat(o.totalsum || o.total || 0), 0);
+      set('live-open', open.length);
+      set('live-sum', fn(openSum));
+      set('live-closed-today', closedT.length);
+      set('live-rev-today', fn(todayRev));
+      const sorted = [
+        ...open.sort((a, b) => (b.creationdt || b.created_at || '').localeCompare(a.creationdt || a.created_at || '')),
+        ...closedT.sort((a, b) => (b.creationdt || b.created_at || '').localeCompare(a.creationdt || a.created_at || ''))
+      ];
+      document.getElementById('liveTable').innerHTML = !sorted.length
+        ? '<tr><td colspan="7" class="empty">Нет заказов сегодня</td></tr>'
+        : sorted.map(o => {
+          const isOpen = o.closed === '0' || o.isClosed === 'false' || o.isClosed === false;
+          const dur = timeSince(o.creationdt || o.created_at || o.dt);
+          const items = (o.t_order || o.items || []).filter(it => parseFloat(it.quantity || 0) > 0).length;
+          const sum = parseFloat(o.totalsum || o.subtotal || o.total || 0);
+          const num = oNum(o);
+          const st = isOpen
+            ? `<span class="tag tag-yellow">Открыт ${dur}</span>`
+            : `<span class="tag tag-green">Закрыт</span>`;
+          return `<tr style="${isOpen ? 'background:rgba(234,179,8,0.04)' : ''}">
+            <td class="td-muted">#${num}</td>
+            <td class="td-main">${o._table}</td>
+            <td>${o._empName}</td>
+            <td class="td-muted">${(o.creationdt || o.created_at || o.dt || '').slice(11, 16)}</td>
+            <td>${st}</td>
+            <td class="${isOpen ? 'td-warn' : 'td-success'}" style="font-weight:800">${fm(sum)}</td>
+            <td class="td-muted">${items || '—'}</td>
+          </tr>`;
+        }).join('');
+    }
+    function timeSince(dt) { if (!dt) return ''; const diff = Math.floor((Date.now() - new Date(dt)) / 60000); if (diff < 1) return '<1 мин'; if (diff < 60) return diff + ' мин'; return Math.floor(diff / 60) + 'ч ' + diff % 60 + 'м'; }
+
+    // ── NAV ──
+    const pageTitles = { analytics: 'Аналитика <span>/ обзор</span>', charts: 'Графики <span>/ визуализация</span>', report: 'Итоговый отчёт <span>/ сводка</span>', shifts: 'Кассы <span>/ смены</span>', danger: 'Опасные операции <span>/ контроль</span>', cashiers: 'Официанты <span>/ анализ</span>', live: 'Онлайн заказы <span>/ реальное время</span>', orders: 'Заказы <span>/ счёт</span>', menu: 'Меню <span>/ топ блюд</span>', realization: 'Акт реализации <span>/ реестр блюд</span>' };
+    function goPage(name) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('page-' + name).classList.add('active');
+      document.getElementById('nav-' + name).classList.add('active');
+      document.getElementById('pageTitle').innerHTML = pageTitles[name] || name;
+      closeSidebar();
+      if (name === 'charts') renderCharts();
+      if (name === 'report') renderReport();
+      if (name === 'realization') renderRealization();
+      // Auto-start live when navigating to live tab
+      if (name === 'live' && !liveInterval && !isDemo) {
+        startLive();
+      }
+    }
+
+    // ── AI ──
+    async function generateAI(rev, cnt, avg, cancels, disc, boxId) {
+      const box = document.getElementById(boxId); box.innerHTML = `<div class="ai-box"><span class="ai-label">AI АНАЛИЗ</span><div class="ai-loading"><div class="spinner"></div>анализ...</div></div>`;
+      const prompt = `Финансовый аналитик ресторана. Кратко (3-4 предложения, русский):\n- Выручка: ${Math.round(rev).toLocaleString('ru-RU')} ₸\n- Заказов: ${cnt}, средний: ${Math.round(avg).toLocaleString('ru-RU')} ₸\n- Отмен/возвратов: ${cancels}\n- Скидки: ${Math.round(disc).toLocaleString('ru-RU')} ₸\nДай 1 конкретную рекомендацию.`;
+      try { const resp = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 300, messages: [{ role: 'user', content: prompt }] }) }); const data = await resp.json(); const text = data.content?.[0]?.text || ''; box.innerHTML = `<div class="ai-box"><span class="ai-label">AI АНАЛИЗ</span><p>${text.replace(/\n\n/g, '</p><p>').replace(/\n/g, ' ')}</p></div>`; } catch (e) { box.innerHTML = ''; }
+    }
+    async function generateDangerAI() {
+      const box = document.getElementById('aiDangerInsight'); const cn = allDanger.filter(d => d.type === 'cancel').length, di = allDanger.filter(d => d.type === 'discount').length, de = allDanger.filter(d => d.type === 'delete').length, rj = allDanger.filter(d => d.type === 'reject').length;
+      const top = [...new Set(allDanger.map(d => d.cashier))].map(c => ({ name: c, ops: allDanger.filter(d => d.cashier === c).length })).sort((a, b) => b.ops - a.ops)[0];
+      box.innerHTML = `<div class="ai-box"><span class="ai-label">AI РИСК-АНАЛИЗ</span><div class="ai-loading"><div class="spinner"></div>оценка рисков...</div></div>`;
+      const prompt = `Служба безопасности ресторана. Оцени риски (3-4 предложения, русский):\n- Отмен: ${cn}, скидок: ${di}, удалений: ${de}, отказов: ${rj}\n- Больше всего операций: ${top?.name || '—'} (${top?.ops || 0} шт)\nЕсть признаки злоупотреблений?`;
+      try { const resp = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 300, messages: [{ role: 'user', content: prompt }] }) }); const data = await resp.json(); const text = data.content?.[0]?.text || ''; box.innerHTML = `<div class="ai-box"><span class="ai-label">AI РИСК-АНАЛИЗ</span><p>${text.replace(/\n\n/g, '</p><p>').replace(/\n/g, ' ')}</p></div>`; } catch (e) { box.innerHTML = ''; }
+    }
+
+
+    // ── REALIZATION ACT ──
+    let realizationData = [];
+    function renderRealization() {
+      const closed = allOrders.filter(o => o.closed === '1' || o.conducted === '1');
+      const from = document.getElementById('dateFrom').value || '';
+      const to = document.getElementById('dateTo').value || '';
+      const venue = document.getElementById('venueName').textContent || '—';
+      set('realiz-venue', venue);
+      set('realiz-period', (from && to) ? `${from} — ${to}` : 'весь период');
+      set('realiz-date', new Date().toLocaleDateString('ru-RU'));
+      // Build dish map
+      const dm = {};
+      closed.forEach(o => (o.t_order || []).forEach(it => {
+        let n = it.itemname; if (!n || n === '?' || n === null) n = iName(it.itemid) || '?';
+        const qty = parseFloat(it.quantity || 1);
+        const sum = parseFloat(it.salesum || it.sum || 0);
+        if (qty > 0 && n !== '?') {
+          if (!dm[n]) dm[n] = { qty: 0, sum: 0, unit: sum > 0 && qty > 0 ? sum / qty : 0 };
+          dm[n].qty += qty; dm[n].sum += sum;
+          if (sum > 0 && qty > 0) dm[n].unit = dm[n].sum / dm[n].qty;
+        }
+      }));
+      realizationData = Object.entries(dm).sort((a, b) => b[1].sum - a[1].sum);
+      const totalSum = realizationData.reduce((s, [, v]) => s + v.sum, 0);
+      const totalQty = realizationData.reduce((s, [, v]) => s + v.qty, 0);
+      const disc = closed.reduce((s, o) => s + parseFloat(o.discountsum || 0), 0);
+      set('realiz-total', fm(totalSum));
+      set('realiz-qty', fn(Math.round(totalQty)));
+      set('realiz-names', realizationData.length);
+      set('realiz-disc', fm(disc));
+      set('realiz-grand', fm(totalSum));
+      set('realizCount', realizationData.length);
+      renderRealizTable(realizationData, totalSum);
+    }
+    function renderRealizTable(data, totalSum) {
+      if (!totalSum) totalSum = data.reduce((s, [, v]) => s + v.sum, 0) || 1;
+      document.getElementById('realizBody').innerHTML = !data.length
+        ? '<tr><td colspan="6" class="empty">Нет данных</td></tr>'
+        : data.map(([name, v], i) => {
+            const pct = totalSum > 0 ? (v.sum / totalSum * 100).toFixed(1) : '0.0';
+            return `<tr>
+              <td class="td-muted">${i + 1}</td>
+              <td class="td-main">${name}</td>
+              <td>${Math.round(v.qty)}</td>
+              <td class="td-muted">${fn(Math.round(v.unit))}</td>
+              <td class="td-success">${fn(Math.round(v.sum))}</td>
+              <td class="td-muted">${pct}%</td>
+            </tr>`;
+          }).join('');
+    }
+    function filterRealization() {
+      const q = document.getElementById('realizSearch').value.toLowerCase();
+      const filtered = q ? realizationData.filter(([n]) => n.toLowerCase().includes(q)) : realizationData;
+      const total = realizationData.reduce((s, [, v]) => s + v.sum, 0);
+      renderRealizTable(filtered, total);
+    }
+    function printRealization() {
+      window.print();
+    }
+    function exportRealizationCSV() {
+      const rows = [['#','Наименование','Кол-во','Цена за ед.','Сумма']];
+      realizationData.forEach(([name, v], i) => {
+        rows.push([i+1, name, Math.round(v.qty), Math.round(v.unit), Math.round(v.sum)]);
+      });
+      const csv = rows.map(r => r.join(';')).join('\n');
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      const from = document.getElementById('dateFrom').value || 'period';
+      const to = document.getElementById('dateTo').value || '';
+      a.download = `act_realization_${from}_${to}.csv`; a.click();
+    }
+
+    // ── LOG HELPERS ──
+    function decodeUnicode(str) { if (!str) return ''; try { if (str.includes('\\u')) return JSON.parse('"' + str.replace(/^"|"$/g, '') + '"'); return str; } catch (e) { return str; } }
+    function parseLogData(data) { if (!data) return ''; try { const decoded = decodeUnicode(data); const arr = JSON.parse(decoded); if (Array.isArray(arr)) return arr.map(el => typeof el === 'string' ? decodeUnicode(el) : '').filter(Boolean).join(', '); return decoded.slice(0, 80); } catch (e) { return decodeUnicode(data).slice(0, 80); } }
+    function parseLogOrderId(data) { if (!data) return null; const m = data.match(/[№#]\s*(\d+)|(?:счёт|заказ|счет)\s+(\d+)/i); if (m) return m[1] || m[2]; return null; }
+  </script>
+</body>
+
+</html>
